@@ -126,6 +126,12 @@ class acp {
     else if (conf.client_profile.equals("torture_list_ins_del")) {
       profile = new torture_list_ins_del();
     }
+    else if (conf.client_profile.equals("torture_list_ins_bulkdel")) {
+      profile = new torture_list_ins_bulkdel();
+    }
+    else if (conf.client_profile.equals("torture_list_ins_maxelement")) {
+      profile = new torture_list_ins_maxelement();
+    }
     else if (conf.client_profile.equals("tiny_btree")) {
       profile = new tiny_btree();
     }
