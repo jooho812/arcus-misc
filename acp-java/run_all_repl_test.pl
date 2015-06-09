@@ -2,17 +2,19 @@
 
 $m_port = 0; # master port
 $s_port = 0; # slave  port
+$failure_type = "none"; # failure type
 $compare_flag = 0;
 
 sub print_usage {
-  print "Usage) perl ./run_all_repl_test.pl master_port slave_port [compare]\n";
+  print "Usage) perl ./run_all_repl_test.pl master_port slave_port failure_type [compare]\n";
 }
 
-if ($#ARGV >= 1 && $#ARGV <= 2) {
+if ($#ARGV >= 1 && $#ARGV <= 3) {
   $m_port = $ARGV[0]; 
   $s_port = $ARGV[1]; 
-  if ($#ARGV == 2) {
-    if ($ARGV[2] eq 'compare') {
+  $failure_type = $ARGV[2]; 
+  if ($#ARGV == 3) {
+    if ($ARGV[3] eq 'compare') {
       $compare_flag = 1;
     } else {
       print_usage();
@@ -21,6 +23,7 @@ if ($#ARGV >= 1 && $#ARGV <= 2) {
   }  
   print "master_port = $m_port\n";
   print "slave_port  = $s_port\n";
+  print "failure_type  = $failure_type\n";
   print "compare_flag = $compare_flag\n";
 } else {
   print_usage(); 
@@ -37,7 +40,7 @@ print "filename = $filename\n";
 print "dir_path = $dir_path\n";
 
 $jar_path = "$dir_path/../../arcus-java-client/target";
-$cls_path = "$jar_path/arcus-java-client-1.7.0.jar" .
+$cls_path = "$jar_path/arcus-java-client-1.8.1.jar" .
     ":$jar_path/zookeeper-3.4.5.jar:$jar_path/log4j-1.2.16.jar" .
     ":$jar_path/slf4j-api-1.6.1.jar:$jar_path/slf4j-log4j12-1.6.1.jar";
 
@@ -70,6 +73,9 @@ print "comp_cmd = $comp_cmd\n";
   #, "torture_simple_sticky"
 );
 
+#$cmd = "rm -f __can_test_failure__";
+#system($cmd);
+
 foreach $script (@script_list) {
   # Flush all before each test
   $cmd = "./flushall.bash localhost $m_port";
@@ -83,7 +89,7 @@ foreach $script (@script_list) {
     "zookeeper=127.0.0.1:2181\n" .
     "service_code=test\n" .
     "client=30\n" .
-    "rate=0\n" .
+    "rate=10000\n" .
     "request=0\n" .
     "time=240\n" .
     "keyset_size=1000000\n" .
@@ -97,6 +103,30 @@ foreach $script (@script_list) {
     "client_profile=" . $script . "\n";
   close CONF;
 
+  #$cmd = "touch __can_test_failure__";
+  #system($cmd);
+
+  if (($failure_type eq "master_kill") || ($failure_type eq "all_kill")) {
+    $cmd = "./loop.memcached.bash master $m_port KILL 20 20 5 &";
+    $ret = system($cmd);
+  }
+  if (($failure_type eq "slave_kill") || ($failure_type eq "all_kill")) {
+    $cmd = "./loop.memcached.bash slave $s_port KILL 10 20 5 &";
+    $ret = system($cmd);
+  }
+  if (($failure_type eq "master_stop") || ($failure_type eq "all_stop")) {
+    $cmd = "./loop.memcached.bash master $m_port INT 20 20 5 &";
+    $ret = system($cmd);
+  }
+  if (($failure_type eq "slave_stop") || ($failure_type eq "all_stop")) {
+    $cmd = "./loop.memcached.bash slave $s_port INT 10 20 5 &";
+    $ret = system($cmd);
+  }
+  if ($failure_type eq "switchover") {
+    $cmd = "./loop.switchover.bash $m_port $s_port 10 10 6 &";
+    $ret = system($cmd);
+  }
+
   $cmd = "java -Xmx2g -Xms2g -Dnet.spy.log.LoggerImpl=net.spy.memcached.compat.log.Log4JLogger" .
          " -classpath $cls_path:. acp -config tmp-config.txt";
   printf "RUN COMMAND=%s\n", $cmd;
@@ -105,6 +135,9 @@ foreach $script (@script_list) {
 
   $ret = system($cmd);
   printf "EXIT CODE=%d\n", $ret;
+
+  #$cmd = "rm -f __can_test_failure__";
+  #system($cmd);
 
   # Run comparison tool
   if ($compare_flag) {
