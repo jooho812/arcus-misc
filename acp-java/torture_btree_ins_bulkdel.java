@@ -18,15 +18,16 @@
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import net.spy.memcached.collection.ElementFlagFilter;
 import net.spy.memcached.collection.CollectionAttributes;
 import net.spy.memcached.collection.CollectionOverflowAction;
 import net.spy.memcached.collection.ElementValueType;
 import net.spy.memcached.internal.CollectionFuture;
 
-public class torture_list_ins_bulkdel implements client_profile {
+public class torture_btree_ins_bulkdel implements client_profile {
   public boolean do_test(client cli) {
     try {
-      if (!do_list_test(cli))
+      if (!do_btree_test(cli))
         return false;
     } catch (Exception e) {
       System.out.printf("client_profile exception. id=%d exception=%s\n", 
@@ -36,9 +37,9 @@ public class torture_list_ins_bulkdel implements client_profile {
     return true;
   }
   
-  // create a list and insert 4000 elements and delete 4000.
+  // create a btree and insert 4000 elements, delete 4000
 
-  public boolean do_list_test(client cli) throws Exception {
+  public boolean do_btree_test(client cli) throws Exception {
     // Pick a key
     String key = cli.ks.get_key();
 
@@ -46,43 +47,40 @@ public class torture_list_ins_bulkdel implements client_profile {
     long base = Long.parseLong(temp[1]);
     base = base * 64*1024;
 
-    // Create a list item
+    // Create a btree item
     if (!cli.before_request(false))
       return false;
+    byte[] eflag = ("EFLAG").getBytes();
+    ElementFlagFilter filter =
+      new ElementFlagFilter(ElementFlagFilter.CompOperands.Equal,
+                            ("EFLAG").getBytes());
     ElementValueType vtype = ElementValueType.BYTEARRAY;
     CollectionAttributes attr = 
       new CollectionAttributes(cli.conf.client_exptime,
                                new Long(200000),
-                               CollectionOverflowAction.head_trim);
-    CollectionFuture<Boolean> fb = cli.next_ac.asyncLopCreate(key, vtype, attr);
+                               CollectionOverflowAction.smallest_trim);
+    CollectionFuture<Boolean> fb = cli.next_ac.asyncBopCreate(key, vtype, attr);
     boolean ok = fb.get(1000L, TimeUnit.MILLISECONDS);
     if (!ok) {
-      System.out.printf("lop create failed. id=%d key=%s: %s\n", cli.id,
+      System.out.printf("bop create failed. id=%d key=%s: %s\n", cli.id,
                         key, fb.getOperationStatus().getResponse());
     }
     if (!cli.after_request(ok, false))
       return false;
 
     // Insert elements
-    for (long lkey = base; lkey < base + 200000; lkey++) {
+    for (long bkey = base; bkey < base + 200000; bkey++) {
       if (!cli.before_request(false))
         return false;
       byte[] val = cli.vset.get_value();
       assert(val.length <= 4096);
-
-      long n = lkey;
-      int i = 0;
-      while (n != 0 && i < val.length) {
-        val[i] = (byte)(n % 10);
-        n = n / 10;
-        i++;
-      }
-      fb = cli.next_ac.asyncLopInsert(key, -1 /* tail */, val,
+      fb = cli.next_ac.asyncBopInsert(key, bkey, eflag /* eflag */,
+                                      val,
                                       null /* Do not auto-create item */);
       ok = fb.get(1000L, TimeUnit.MILLISECONDS);
       if (!ok) {
-        System.out.printf("lop insert failed. id=%d key=%s lkey=%d: %s\n",
-                          cli.id, key, lkey,
+        System.out.printf("bop insert failed. id=%d key=%s bkey=%d: %s\n",
+                          cli.id, key, bkey,
                           fb.getOperationStatus().getResponse());
       }
       if (!cli.after_request(ok, false))
@@ -90,21 +88,31 @@ public class torture_list_ins_bulkdel implements client_profile {
     }
 
     // Delete elements
-    int index_from = 1;
-    int index_to = 100000;
+    {
+        if (!cli.before_request())
+          return false;
 
-    if (!cli.before_request())
-      return false;
-    fb = cli.next_ac.asyncLopDelete(key, index_from, index_to, true /* dropIfEmpty */);
-    ok = fb.get(1000L, TimeUnit.MILLISECONDS);
-    if (!ok) {
-      System.out.printf("lop delete failed. id=%d key=%s index=%d~%d: %s\n",
-                        cli.id, key, index_from,index_to,
-                        fb.getOperationStatus().getResponse());
+        long bkey = base+1;
+        long bkey_to = base+100000;
+        CollectionFuture<Boolean> f =
+          cli.next_ac.asyncBopDelete(key, bkey, bkey_to, filter,
+                                     0, false);
+        ok = f.get(1000L, TimeUnit.MILLISECONDS);
+        if (!ok) {
+          System.out.printf("Collection_Btree: BopDelete failed." +
+                            " id=%d key=%s: %s\n", cli.id, key,
+                            f.getOperationStatus().getResponse());
+        }
+        else
+        {
+          System.out.printf("Collection_Btree: BopDelete success." +
+                            " id=%d key=%s: %s\n", cli.id, key,
+                            f.getOperationStatus().getResponse());
+        }
+        if (!cli.after_request(ok))
+          return false;
     }
-    if (!cli.after_request(ok))
-      return false;
-
+   
     return true;
   }
 }

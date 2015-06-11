@@ -102,6 +102,9 @@ class acp {
     else if (conf.client_profile.equals("torture_btree_ins_del")) {
       profile = new torture_btree_ins_del();
     }
+    else if (conf.client_profile.equals("torture_btree_ins_bulkdel")) {
+      profile = new torture_btree_ins_bulkdel();
+    }
     else if (conf.client_profile.equals("torture_btree_bytebkey")) {
       profile = new torture_btree_bytebkey();
     }

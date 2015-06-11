@@ -81,8 +81,8 @@ public class torture_list_ins_maxelement implements client_profile {
                                       null /* Do not auto-create item */);
       ok = fb.get(1000L, TimeUnit.MILLISECONDS);
       if (!ok) {
-        System.out.printf("lop insert failed. id=%d key=%s lkey=%d: %s\n",
-                          cli.id, key, lkey,
+        System.out.printf("lop insert failed. id=%d key=%s lkey=%d base=%d: %s\n",
+                          cli.id, key, lkey, base,
                           fb.getOperationStatus().getResponse());
       }
       if (!cli.after_request(ok))

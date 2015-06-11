@@ -36,4 +36,4 @@ fi
 
 echo ">>>>>> start memcached as $pidfile..."
 sleep 1
-$MEMC_DIR/memcached -E $MEMC_DIR/.libs/default_engine.so  -X $MEMC_DIR/.libs/syslog_logger.so -X $MEMC_DIR/.libs/ascii_scrub.so -d -v -r -R5 -U 0 -D: -b 8192 -m1500 -p $port_num -c 1000 -t $thread_count -z 127.0.0.1:2181 -e "replication_config_file=replication.config;" -P "$pidfile.pid" -o 2
+$MEMC_DIR/memcached -E $MEMC_DIR/.libs/default_engine.so  -X $MEMC_DIR/.libs/syslog_logger.so -X $MEMC_DIR/.libs/ascii_scrub.so -d -v -r -R5 -U 0 -D: -b 8192 -m2000 -p $port_num -c 1000 -t $thread_count -z 127.0.0.1:2181 -e "replication_config_file=replication.config;" -P "$pidfile.pid" -o 3 -g 100

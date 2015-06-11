@@ -17,15 +17,15 @@ rate=0
 request=0
 
 #
-time=120
+time=240
 
-keyset_size=1
-key_prefix=listmaxelem:
-valueset_min_size=4000
-valueset_max_size=4000
+keyset_size=1000000
+key_prefix=btreebulkdel:
+valueset_min_size=2048
+valueset_max_size=2048
 
-client_profile=torture_list_ins_maxelement
-client_exptime=-1
+client_profile=torture_btree_ins_bulkdel
+client_exptime=0
 
 pool=1
 pool_size=1

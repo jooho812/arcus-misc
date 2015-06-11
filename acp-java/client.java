@@ -63,6 +63,22 @@ public class client implements Runnable {
     stop = b;
   }
 
+  public boolean before_request(boolean check_latency)
+  {
+    if (check_latency)
+    {
+      return before_request();
+    }
+
+    // Pick the ArcusClient
+    ArcusClient ac = fixed_ac;
+    if (ac == null) {
+      ac = pool.getClient();
+    }
+    next_ac = ac;
+    return true;
+  }
+
   public boolean before_request() {
       // Rate control
       if (conf.rate > 0) {
@@ -133,6 +149,15 @@ public class client implements Runnable {
     }
     if (latency_vector.size() < limit)
       latency_vector.add(lat);
+  }
+
+  public boolean after_request(boolean ok, boolean check_latency)
+  {
+    if (check_latency)
+    {
+      return after_request(ok);
+    }
+    return true;
   }
 
   public boolean after_request(boolean ok) {
