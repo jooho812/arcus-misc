@@ -105,6 +105,9 @@ class acp {
     else if (conf.client_profile.equals("torture_btree_ins_bulkdel")) {
       profile = new torture_btree_ins_bulkdel();
     }
+    else if (conf.client_profile.equals("torture_btree_ins_getwithdelete")) {
+      profile = new torture_btree_ins_getwithdelete();
+    }
     else if (conf.client_profile.equals("torture_btree_bytebkey")) {
       profile = new torture_btree_bytebkey();
     }
@@ -123,6 +126,9 @@ class acp {
     else if (conf.client_profile.equals("torture_set_ins_del")) {
       profile = new torture_set_ins_del();
     }
+    else if (conf.client_profile.equals("torture_set_ins_getwithdelete")) {
+      profile = new torture_set_ins_getwithdelete();
+    }
     else if (conf.client_profile.equals("torture_list")) {
       profile = new torture_list();
     }
@@ -131,6 +137,9 @@ class acp {
     }
     else if (conf.client_profile.equals("torture_list_ins_bulkdel")) {
       profile = new torture_list_ins_bulkdel();
+    }
+    else if (conf.client_profile.equals("torture_list_ins_getwithdelete")) {
+      profile = new torture_list_ins_getwithdelete();
     }
     else if (conf.client_profile.equals("torture_list_ins_maxelement")) {
       profile = new torture_list_ins_maxelement();

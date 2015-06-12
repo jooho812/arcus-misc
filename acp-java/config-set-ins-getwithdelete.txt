@@ -20,11 +20,11 @@ request=0
 time=240
 
 keyset_size=1000000
-key_prefix=listbulkdel:
+key_prefix=setgetwithdelete:
 valueset_min_size=2048
 valueset_max_size=2048
 
-client_profile=torture_list_ins_bulkdel
+client_profile=torture_set_ins_getwithdelete
 client_exptime=0
 
 pool=1

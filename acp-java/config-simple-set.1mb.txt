@@ -25,7 +25,7 @@ valueset_min_size=1048000
 valueset_max_size=1048000
 
 client_profile=simple_set
-client_exptime=160
+client_exptime=0
 
 pool=1
 pool_size=1
