@@ -108,6 +108,9 @@ class acp {
     else if (conf.client_profile.equals("torture_btree_ins_getwithdelete")) {
       profile = new torture_btree_ins_getwithdelete();
     }
+    else if (conf.client_profile.equals("torture_btree_ins_maxelement")) {
+      profile = new torture_btree_ins_maxelement();
+    }
     else if (conf.client_profile.equals("torture_btree_bytebkey")) {
       profile = new torture_btree_bytebkey();
     }
@@ -407,16 +410,16 @@ class acp {
         }
         lat_vectors.clear();
         Arrays.sort(all_latencies);
-        int p = all_latencies.length / 100;
         if (!conf.pretty_stat && all_latencies.length > 0) {
-          System.out.printf("latency (usec). min=%d 10th=%d" +
+          System.out.printf("latency (usec). requests=%d min=%d 10th=%d" +
                             " 50th=%d 80th=%d 90th=%d 99th=%d max=%d\n",
+                            all_latencies.length,
                             all_latencies[0], 
-                            all_latencies[p * 10],
-                            all_latencies[p * 50],
-                            all_latencies[p * 80],
-                            all_latencies[p * 90],
-                            all_latencies[p * 99],
+                            all_latencies[all_latencies.length * 10/100],
+                            all_latencies[all_latencies.length * 50/100],
+                            all_latencies[all_latencies.length * 80/100],
+                            all_latencies[all_latencies.length * 90/100],
+                            all_latencies[all_latencies.length * 99/100],
                             all_latencies[all_latencies.length-1]);
         }
 
@@ -427,11 +430,11 @@ class acp {
         if (conf.pretty_stat && all_latencies.length > 0) {
           /*
           System.out.printf("%d\t%d\t\t%d\t%d\t%d\n", delta_requests, delta_error, //request_rate, error_rate,
-                            all_latencies[0], all_latencies[p * 50], all_latencies[p * 90]);
+                            all_latencies[0], all_latencies[all_latencies.length * 50/100], all_latencies[all_latencies.length * 90/100]);
           */
           System.out.printf("%d\t%d\t\t%.02f\t%.02f\t%.02f\n", delta_requests, delta_error, //request_rate, error_rate,
-                            all_latencies[0]/1000.0, all_latencies[p * 50]/1000.0, 
-                            all_latencies[p * 90]/1000.0);
+                            all_latencies[0]/1000.0, all_latencies[all_latencies.length * 50/100]/1000.0, 
+                            all_latencies[all_latencies.length * 90/100]/1000.0);
         }
         else {
           System.out.printf("%d\t%d\t\tX\tX\tX\n", delta_requests, delta_error); //request_rate, error_rate);

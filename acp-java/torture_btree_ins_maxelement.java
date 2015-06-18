@@ -17,17 +17,17 @@
  */
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.Set;
 
+import net.spy.memcached.collection.ElementFlagFilter;
 import net.spy.memcached.collection.CollectionAttributes;
 import net.spy.memcached.collection.CollectionOverflowAction;
 import net.spy.memcached.collection.ElementValueType;
 import net.spy.memcached.internal.CollectionFuture;
 
-public class torture_set_ins_getwithdelete implements client_profile {
+public class torture_btree_ins_maxelement implements client_profile {
   public boolean do_test(client cli) {
     try {
-      if (!do_set_test(cli))
+      if (!do_btree_test(cli))
         return false;
     } catch (Exception e) {
       System.out.printf("client_profile exception. id=%d exception=%s\n", 
@@ -37,9 +37,9 @@ public class torture_set_ins_getwithdelete implements client_profile {
     return true;
   }
   
-  // create a set and insert 4000 elements and delete 4000
+  // create a btree and insert 4000 elements, delete 4000
 
-  public boolean do_set_test(client cli) throws Exception {
+  public boolean do_btree_test(client cli) throws Exception {
     // Pick a key
     String key = cli.ks.get_key();
 
@@ -47,63 +47,45 @@ public class torture_set_ins_getwithdelete implements client_profile {
     long base = Long.parseLong(temp[1]);
     base = base * 64*1024;
 
-    // Create a set item
+    // Create a btree item
     if (!cli.before_request(false))
       return false;
+    byte[] eflag = ("EFLAG").getBytes();
+    ElementFlagFilter filter =
+      new ElementFlagFilter(ElementFlagFilter.CompOperands.Equal,
+                            ("EFLAG").getBytes());
     ElementValueType vtype = ElementValueType.BYTEARRAY;
     CollectionAttributes attr = 
       new CollectionAttributes(cli.conf.client_exptime,
                                new Long(200000),
-                               CollectionOverflowAction.error);
-    CollectionFuture<Boolean> fb = cli.next_ac.asyncSopCreate(key, vtype, attr);
+                               CollectionOverflowAction.smallest_trim);
+    CollectionFuture<Boolean> fb = cli.next_ac.asyncBopCreate(key, vtype, attr);
     boolean ok = fb.get(1000L, TimeUnit.MILLISECONDS);
     if (!ok) {
-      System.out.printf("sop create failed. id=%d key=%s: %s\n", cli.id,
+      System.out.printf("bop create failed. id=%d key=%s: %s\n", cli.id,
                         key, fb.getOperationStatus().getResponse());
     }
     if (!cli.after_request(ok, false))
       return false;
 
     // Insert elements
-    for (long skey = base; skey < base + 200000; skey++) {
-      if (!cli.before_request(false))
+    for (long bkey = base; bkey < base + 200000; bkey++) {
+      if (!cli.before_request())
         return false;
-      byte[] val = new byte[10];
-
-      long n = skey;
-      int i = 0;
-      while (n != 0 && i < val.length) {
-        val[i] = (byte)(n % 10);
-        n = n / 10;
-        i++;
-      }
-      fb = cli.next_ac.asyncSopInsert(key, val,
+      byte[] val = cli.vset.get_value();
+      assert(val.length <= 4096);
+      fb = cli.next_ac.asyncBopInsert(key, bkey, eflag /* eflag */,
+                                      val,
                                       null /* Do not auto-create item */);
-      ok = fb.get(5000L, TimeUnit.MILLISECONDS);
+      ok = fb.get(1000L, TimeUnit.MILLISECONDS);
       if (!ok) {
-        System.out.printf("sop insert failed. id=%d key=%s skey=%d: %s\n",
-                          cli.id, key, skey,
+        System.out.printf("bop insert failed. id=%d key=%s bkey=%d: %s\n",
+                          cli.id, key, bkey,
                           fb.getOperationStatus().getResponse());
       }
-      if (!cli.after_request(ok, false))
+      if (!cli.after_request(ok))
         return false;
     }
-
-    // Delete elements
-    if (!cli.before_request())
-      return false;
-    CollectionFuture<Set<Object>> f =
-      cli.next_ac.asyncSopGet(key, 100000, true /* withDelete */,
-                              true /* dropIfEmpty */);
-    Set<Object> val = f.get(5000L, TimeUnit.MILLISECONDS);
-    if (val == null || val.size() <= 0) {
-      System.out.printf("Collection_Set: SopGet failed." +
-                        " id=%d key=%s val.size=%d\n",
-                        cli.id, key,
-                        val == null ? -1 : val.size());
-    }
-    if (!cli.after_request(true))
-      return false;
 
     return true;
   }

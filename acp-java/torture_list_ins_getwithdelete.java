@@ -99,7 +99,7 @@ public class torture_list_ins_getwithdelete implements client_profile {
     CollectionFuture<List<Object>> f =
       cli.next_ac.asyncLopGet(key, index_from, index_to, true /* withDelete */, 
                               true /* dropIfEmpty */);
-    List<Object> val = f.get(1000L, TimeUnit.MILLISECONDS);
+    List<Object> val = f.get(5000L, TimeUnit.MILLISECONDS);
     if (val == null || val.size() <= 0) {
       System.out.printf("Collection_List: LopGet failed." +
                         " id=%d key=%s val.size=%d\n",
