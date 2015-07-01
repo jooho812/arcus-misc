@@ -89,9 +89,9 @@ foreach $script (@script_list) {
     "zookeeper=127.0.0.1:2181\n" .
     "service_code=test\n" .
     "client=30\n" .
-    "rate=10000\n" .
+    "rate=0\n" .
     "request=0\n" .
-    "time=240\n" .
+    "time=500\n" .
     "keyset_size=1000000\n" .
     "valueset_min_size=10\n" .
     "valueset_max_size=4000\n" .
@@ -99,15 +99,15 @@ foreach $script (@script_list) {
     "pool_size=30\n" .
     "pool_use_random=false\n" .
     "key_prefix=tmptest:\n" .
-    "client_exptime=160\n" .
+    "client_exptime=0\n" .
     "client_profile=" . $script . "\n";
   close CONF;
 
-  #$cmd = "touch __can_test_failure__";
-  #system($cmd);
+  $cmd = "touch __can_test_failure__";
+  system($cmd);
 
   if (($failure_type eq "master_kill") || ($failure_type eq "all_kill")) {
-    $cmd = "./loop.memcached.bash master $m_port KILL 20 20 5 &";
+    $cmd = "./loop.memcached.bash master $m_port KILL 40 20 5 &";
     $ret = system($cmd);
   }
   if (($failure_type eq "slave_kill") || ($failure_type eq "all_kill")) {
@@ -115,7 +115,7 @@ foreach $script (@script_list) {
     $ret = system($cmd);
   }
   if (($failure_type eq "master_stop") || ($failure_type eq "all_stop")) {
-    $cmd = "./loop.memcached.bash master $m_port INT 20 20 5 &";
+    $cmd = "./loop.memcached.bash master $m_port INT 40 20 5 &";
     $ret = system($cmd);
   }
   if (($failure_type eq "slave_stop") || ($failure_type eq "all_stop")) {
@@ -123,7 +123,7 @@ foreach $script (@script_list) {
     $ret = system($cmd);
   }
   if ($failure_type eq "switchover") {
-    $cmd = "./loop.switchover.bash $m_port $s_port 10 10 6 &";
+    $cmd = "./loop.switchover.bash $m_port $s_port 10 60 6 &";
     $ret = system($cmd);
   }
 
@@ -136,11 +136,16 @@ foreach $script (@script_list) {
   $ret = system($cmd);
   printf "EXIT CODE=%d\n", $ret;
 
-  #$cmd = "rm -f __can_test_failure__";
-  #system($cmd);
+  $cmd = "rm -f __can_test_failure__";
+  system($cmd);
 
   # Run comparison tool
   if ($compare_flag) {
+    sleep 40;
+    $cmd = "./start_memcached.bash";
+    $ret = system($cmd);
+    sleep 40;
+
     $cmd = "rm -f $dir_path/keydump*";
     print "$cmd\n";
     system($cmd);

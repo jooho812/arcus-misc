@@ -55,16 +55,19 @@ COUNTER=1
 while [ $COUNTER -le $run_count ];
 do 
   echo ">>>>>> $0 running ($COUNTER/$run_count)"
-  #if  [ -f "$can_test_failure" ];
-  #then
+  if  [ -f "$can_test_failure" ];
+  then
     echo ">>>>>> kill and run $pidfile"
     ./killandrun.memcached.bash $pidfile $port_num $kill_type
-  #else
-  #  echo ">>>>>> cannot kill and run slave"
-  #fi
+  else
+    echo ">>>>>> cannot kill and run slave"
+  fi
   echo ">>>>>> sleep for $run_interval"
   sleep $run_interval
   echo ">>>>>> wakeup"
 
   let COUNTER=COUNTER+1
 done
+
+#sleep 40
+#./start_memcached.bash

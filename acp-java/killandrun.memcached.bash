@@ -26,14 +26,17 @@ DIR=`dirname $DIR`
 MEMC_DIR=$DIR/../../arcus-memcached
 thread_count=32
 
-if [ -f "$pidfile.pid" ];
+mkdir -p pidfiles
+
+if [ -f "pidfiles/memcached.127.0.0.1:$port_num" ];
 then
-  echo ">>>>>> kill -$kill_type `cat $pidfile.pid`"
-  kill -$kill_type `cat $pidfile.pid`
-  echo ">>>>>> wait a second to terminate $pidfile"
-  sleep 5
+  echo ">>>>>> kill -$kill_type `cat pidfiles/memcached.127.0.0.1:$port_num`"
+  kill -$kill_type `cat pidfiles/memcached.127.0.0.1:$port_num`
+  echo ">>>>>> wait a second to terminate $pidfile : `date`"
+  sleep 40
 fi
 
-echo ">>>>>> start memcached as $pidfile..."
+echo ">>>>>> start memcached as $pidfile... : `date`"
 sleep 1
-$MEMC_DIR/memcached -E $MEMC_DIR/.libs/default_engine.so  -X $MEMC_DIR/.libs/syslog_logger.so -X $MEMC_DIR/.libs/ascii_scrub.so -d -v -r -R5 -U 0 -D: -b 8192 -m2000 -p $port_num -c 1000 -t $thread_count -z 127.0.0.1:2181 -e "replication_config_file=replication.config;" -P "$pidfile.pid" -o 3 -g 100
+#$MEMC_DIR/memcached -E $MEMC_DIR/.libs/default_engine.so  -X $MEMC_DIR/.libs/ascii_scrub.so -d -v -r -R5 -U 0 -D: -b 8192 -m2000 -p $port_num -c 1000 -t $thread_count -z 127.0.0.1:2181 -e "replication_config_file=replication.config;" -P pidfiles/memcached.127.0.0.1:$port_num -o 3 -g 100
+$MEMC_DIR/memcached -E $MEMC_DIR/.libs/default_engine.so  -X $MEMC_DIR/.libs/syslog_logger.so -X $MEMC_DIR/.libs/ascii_scrub.so -d -v -r -R5 -U 0 -D: -b 8192 -m2000 -p $port_num -c 1000 -t $thread_count -z 127.0.0.1:2181 -e "replication_config_file=replication.config;" -P pidfiles/memcached.127.0.0.1:$port_num -o 3 -g 100

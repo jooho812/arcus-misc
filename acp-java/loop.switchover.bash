@@ -48,23 +48,28 @@ COUNTER=1
 while [ $COUNTER -le $run_count ];
 do 
   echo ">>>>>> $0 running ($COUNTER/$run_count)"
-  if  [ `expr $COUNTER % 2` == 1 ];
+  if  [ -f "$can_test_failure" ];
   then
-    echo ">>>>>> execute switchover : $master_port"
-    {
-      sleep 1
-      echo "replication switchover"
-      sleep 1
-      echo quit
-    } | telnet localhost $master_port
+    if  [ `expr $COUNTER % 2` == 1 ];
+    then
+      echo ">>>>>> execute switchover : $master_port"
+      {
+        sleep 1
+        echo "replication switchover"
+        sleep 1
+        echo quit
+      } | telnet localhost $master_port
+    else
+      echo ">>>>>> execute switchover : $slave_port"
+      {
+        sleep 1
+        echo "replication switchover"
+        sleep 1
+        echo quit
+      } | telnet localhost $slave_port
+    fi
   else
-    echo ">>>>>> execute switchover : $slave_port"
-    {
-      sleep 1
-      echo "replication switchover"
-      sleep 1
-      echo quit
-    } | telnet localhost $slave_port
+    echo ">>>>>> cannot switchover"
   fi
   echo ">>>>>> sleep for $run_interval"
   sleep $run_interval
