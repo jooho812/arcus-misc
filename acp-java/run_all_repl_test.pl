@@ -98,7 +98,7 @@ foreach $script (@script_list) {
     "pool=1\n" .
     "pool_size=30\n" .
     "pool_use_random=false\n" .
-    "key_prefix=tmptest:\n" .
+    "key_prefix=" . $script . ":\n" .
     "client_exptime=0\n" .
     "client_profile=" . $script . "\n";
   close CONF;
@@ -106,24 +106,32 @@ foreach $script (@script_list) {
   $cmd = "touch __can_test_failure__";
   system($cmd);
 
-  if (($failure_type eq "master_kill") || ($failure_type eq "all_kill")) {
-    $cmd = "./loop.memcached.bash master $m_port KILL 40 20 5 &";
+  if ($failure_type eq "all_kill") {
+    $cmd = "./loop.memcached.bash $m_port $s_port all KILL 10 10 8 &";
     $ret = system($cmd);
   }
-  if (($failure_type eq "slave_kill") || ($failure_type eq "all_kill")) {
-    $cmd = "./loop.memcached.bash slave $s_port KILL 10 20 5 &";
+  elsif ($failure_type eq "all_stop") {
+    $cmd = "./loop.memcached.bash $m_port $s_port all INT 10 10 8 &";
     $ret = system($cmd);
   }
-  if (($failure_type eq "master_stop") || ($failure_type eq "all_stop")) {
-    $cmd = "./loop.memcached.bash master $m_port INT 40 20 5 &";
+  elsif ($failure_type eq "master_kill") {
+    $cmd = "./loop.memcached.bash $m_port $s_port master KILL 10 10 8 &";
     $ret = system($cmd);
   }
-  if (($failure_type eq "slave_stop") || ($failure_type eq "all_stop")) {
-    $cmd = "./loop.memcached.bash slave $s_port INT 10 20 5 &";
+  elsif ($failure_type eq "master_stop") {
+    $cmd = "./loop.memcached.bash $m_port $s_port master INT 10 10 8 &";
     $ret = system($cmd);
   }
-  if ($failure_type eq "switchover") {
-    $cmd = "./loop.switchover.bash $m_port $s_port 10 60 6 &";
+  elsif ($failure_type eq "slave_kill") {
+    $cmd = "./loop.memcached.bash $m_port $s_port slave KILL 10 10 8 &";
+    $ret = system($cmd);
+  }
+  elsif ($failure_type eq "slave_stop") {
+    $cmd = "./loop.memcached.bash $m_port $s_port slave INT 10 10 8 &";
+    $ret = system($cmd);
+  }
+  elsif ($failure_type eq "switchover") {
+    $cmd = "./loop.switchover.bash $m_port $s_port 10 10 8 &";
     $ret = system($cmd);
   }
 

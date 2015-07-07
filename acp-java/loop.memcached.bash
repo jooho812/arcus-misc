@@ -1,55 +1,65 @@
 #!/bin/bash
 
-echo ">>>>>> $0 pidfile port_num kill_type start_time run_interval run_count"
+echo ">>>>>> $0 master_port slave_port node_type kill_type start_time run_interval run_count"
 
 if [ -z "$1" ];
 then
-  pidfile="master"
+  master_port=11211
 else
-  pidfile="$1"
+  master_port=$1
 fi
 
 if [ -z "$2" ];
 then
-  port_num=11211
+  slave_port=11212
 else
-  port_num=$2
+  slave_port=$2
 fi
 
 if [ -z "$3" ];
 then
-  kill_type="INT"
+  node_type="all"
 else
-  kill_type="$3"
+  node_type=$3
 fi
 
 if [ -z "$4" ];
 then
-  start_time=30
+  kill_type="INT"
 else
-  start_time=$4
+  kill_type=$4
 fi
 
 if [ -z "$5" ];
 then
-  run_interval=30
+  start_time=30
 else
-  run_interval=$5
+  start_time=$5
 fi
 
 if [ -z "$6" ];
 then
-  run_count=1000000
+  run_interval=30
 else
-  run_count=$6
+  run_interval=$6
 fi
 
-echo ">>>>>> $0 $pidfile $port_num $kill_type $start_time $run_interval $run_count"
+if [ -z "$7" ];
+then
+  run_count=1000000
+else
+  run_count=$7
+fi
+
+echo ">>>>>> $0 $master_port $slave_port $node_type $kill_type $start_time $run_interval $run_count"
 
 can_test_failure="__can_test_failure__"
 
 echo ">>>>>> sleep for $start_time before starting"
 sleep $start_time
+
+action_node="slave"
+action_port=$slave_port
 
 COUNTER=1
 while [ $COUNTER -le $run_count ];
@@ -57,17 +67,47 @@ do
   echo ">>>>>> $0 running ($COUNTER/$run_count)"
   if  [ -f "$can_test_failure" ];
   then
-    echo ">>>>>> kill and run $pidfile"
-    ./killandrun.memcached.bash $pidfile $port_num $kill_type
+    if  [ "$node_type" == "all" ];
+    then
+      if  [ `expr \( $COUNTER - 1 \) % 4` == 0 ];
+      then
+        action_node="master"
+        action_port=$master_port
+      elif  [ `expr \( $COUNTER - 1 \) % 4` == 1 ];
+      then
+        action_node="master"
+        action_port=$master_port
+      elif  [ `expr \( $COUNTER - 1 \) % 4` == 2 ];
+      then
+        action_node="slave"
+        action_port=$slave_port
+      else
+        action_node="slave"
+        action_port=$slave_port
+      fi
+    elif  [ "$node_type" == "master" ];
+    then
+      if  [ `expr \( $COUNTER - 1 \) % 2` == 0 ];
+      then
+        action_node="master"
+        action_port=$master_port
+      else
+        action_node="slave"
+        action_port=$slave_port
+      fi
+    fi
+
+    echo ">>>>>> kill and run node($action_port)"
+    echo ">>>>>> ./killandrun.memcached.bash $action_node $action_port $kill_type"
+    ./killandrun.memcached.bash $action_node $action_port $kill_type
   else
-    echo ">>>>>> cannot kill and run slave"
+    echo ">>>>>> cannot kill and run node"
   fi
   echo ">>>>>> sleep for $run_interval"
   sleep $run_interval
   echo ">>>>>> wakeup"
 
+#  ./start_memcached.bash
+
   let COUNTER=COUNTER+1
 done
-
-#sleep 40
-#./start_memcached.bash
