@@ -20,6 +20,7 @@ import java.io.FileInputStream;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -1052,10 +1053,11 @@ public class compare {
       }
     } while(false);
 
+    Date finishTime = new Date();
     if (isSame == true) {
-      System.out.println("Finished comparison: SAME");
+      System.out.println(finishTime.toString() + " Finished comparison: SAME");
     } else {
-      System.out.println("Finished comparison: DIFFERENT");
+      System.out.println(finishTime.toString() + " Finished comparison: DIFFERENT");
     }
     System.out.printf("SIMPLE ok=%d bad=%d missing=%d attr=%d value=%d cas=%d\n" +
                       "       missing_0=%d missing_0_expired=%d missing_1=%d missing_1_expired=%d\n",

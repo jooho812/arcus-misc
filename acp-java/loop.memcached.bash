@@ -102,6 +102,7 @@ do
     ./killandrun.memcached.bash $action_node $action_port $kill_type
   else
     echo ">>>>>> cannot kill and run node"
+    exit 1
   fi
   echo ">>>>>> sleep for $run_interval"
   sleep $run_interval

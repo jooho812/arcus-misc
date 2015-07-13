@@ -53,20 +53,10 @@ do
     if  [ `expr $COUNTER % 2` == 1 ];
     then
       echo ">>>>>> execute switchover : $master_port"
-      {
-        sleep 1
-        echo "replication switchover"
-        sleep 1
-        echo quit
-      } | telnet localhost $master_port
+      echo "replication switchover" | nc localhost $master_port
     else
       echo ">>>>>> execute switchover : $slave_port"
-      {
-        sleep 1
-        echo "replication switchover"
-        sleep 1
-        echo quit
-      } | telnet localhost $slave_port
+      echo "replication switchover" | nc localhost $slave_port
     fi
   else
     echo ">>>>>> cannot switchover"
@@ -74,6 +64,8 @@ do
   echo ">>>>>> sleep for $run_interval"
   sleep $run_interval
   echo ">>>>>> wakeup"
+
+  ./start_memcached.bash
 
   let COUNTER=COUNTER+1
 done

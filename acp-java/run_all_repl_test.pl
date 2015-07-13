@@ -3,18 +3,20 @@
 $m_port = 0; # master port
 $s_port = 0; # slave  port
 $failure_type = "none"; # failure type
+$run_dumration = 0;
 $compare_flag = 0;
 
 sub print_usage {
-  print "Usage) perl ./run_all_repl_test.pl master_port slave_port failure_type [compare]\n";
+  print "Usage) perl ./run_all_repl_test.pl master_port slave_port failure_type run_duration [compare]\n";
 }
 
-if ($#ARGV >= 1 && $#ARGV <= 3) {
+if ($#ARGV >= 3 && $#ARGV <= 4) {
   $m_port = $ARGV[0]; 
   $s_port = $ARGV[1]; 
   $failure_type = $ARGV[2]; 
-  if ($#ARGV == 3) {
-    if ($ARGV[3] eq 'compare') {
+  $run_duration = $ARGV[3]; 
+  if ($#ARGV == 4) {
+    if ($ARGV[4] eq 'compare') {
       $compare_flag = 1;
     } else {
       print_usage();
@@ -24,6 +26,7 @@ if ($#ARGV >= 1 && $#ARGV <= 3) {
   print "master_port = $m_port\n";
   print "slave_port  = $s_port\n";
   print "failure_type  = $failure_type\n";
+  print "run_duration = $run_duration\n";
   print "compare_flag = $compare_flag\n";
 } else {
   print_usage(); 
@@ -83,6 +86,11 @@ foreach $script (@script_list) {
   system($cmd);
   sleep 1;
 
+  $cmd = "./flushall.bash localhost $s_port";
+  print "DO_FLUSH_ALL. $cmd\n";
+  system($cmd);
+  sleep 1;
+
   # Create a temporary config file to run the test
   open CONF, ">tmp-config.txt" or die $!;
   print CONF 
@@ -91,7 +99,7 @@ foreach $script (@script_list) {
     "client=30\n" .
     "rate=0\n" .
     "request=0\n" .
-    "time=500\n" .
+    "time=" . $run_duration . "\n" .
     "keyset_size=1000000\n" .
     "valueset_min_size=10\n" .
     "valueset_max_size=4000\n" .
@@ -149,10 +157,10 @@ foreach $script (@script_list) {
 
   # Run comparison tool
   if ($compare_flag) {
-    sleep 40;
-    $cmd = "./start_memcached.bash";
+    sleep 5; # for stopping loop.*.bash
+    $cmd = "./start_memcached.bash"; # to make sure that both master & slave run
     $ret = system($cmd);
-    sleep 40;
+    sleep 5; # for starting memcached
 
     $cmd = "rm -f $dir_path/keydump*";
     print "$cmd\n";

@@ -25,6 +25,7 @@ DIR=`readlink -f $0`
 DIR=`dirname $DIR`
 MEMC_DIR=$DIR/../../arcus-memcached
 thread_count=32
+sleep_time=5
 
 mkdir -p pidfiles
 
@@ -32,8 +33,13 @@ if [ -f "pidfiles/memcached.127.0.0.1:$port_num" ];
 then
   echo ">>>>>> kill -$kill_type `cat pidfiles/memcached.127.0.0.1:$port_num`"
   kill -$kill_type `cat pidfiles/memcached.127.0.0.1:$port_num`
+  if [ "$kill_type" == "KILL" ];
+  then
+    sleep_time=40
+  fi
   echo ">>>>>> wait a second to terminate $pidfile : `date`"
-  sleep 40
+  echo ">>>>>> sleep for $sleep_time"
+  sleep $sleep_time
 fi
 
 echo ">>>>>> start memcached as $pidfile... : `date`"
