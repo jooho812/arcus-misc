@@ -61,12 +61,28 @@ sleep $start_time
 action_node="slave"
 action_port=$slave_port
 
+file_time=0
+
 COUNTER=1
 while [ $COUNTER -le $run_count ];
 do 
   echo ">>>>>> $0 running ($COUNTER/$run_count)"
   if  [ -f "$can_test_failure" ];
   then
+
+    if [ $file_time == 0 ];
+    then
+      file_time=`stat -c %Y $can_test_failure`
+    fi
+
+    if [ `stat -c %Y $can_test_failure` -ne $file_time ];
+    then
+      echo ">>>>>> cannot kill and run node (test case changed)"
+      exit 1
+    fi
+
+    file_time=`stat -c %Y $can_test_failure`
+
     if  [ "$node_type" == "all" ];
     then
       if  [ `expr \( $COUNTER - 1 \) % 4` == 0 ];
@@ -101,7 +117,7 @@ do
     echo ">>>>>> ./killandrun.memcached.bash $action_node $action_port $kill_type"
     ./killandrun.memcached.bash $action_node $action_port $kill_type
   else
-    echo ">>>>>> cannot kill and run node"
+    echo ">>>>>> cannot kill and run node (test case ended)"
     exit 1
   fi
   echo ">>>>>> sleep for $run_interval"
