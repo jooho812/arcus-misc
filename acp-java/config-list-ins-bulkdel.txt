@@ -30,3 +30,6 @@ client_exptime=0
 pool=1
 pool_size=1
 pool_use_random=false
+
+ins_element_size=200000
+act_element_size=100000

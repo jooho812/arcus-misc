@@ -37,7 +37,7 @@ public class torture_btree_ins_maxelement implements client_profile {
     return true;
   }
   
-  // create a btree and insert 4000 elements, delete 4000
+  // create a btree and insert cli.conf.ins_element_size elements.
 
   public boolean do_btree_test(client cli) throws Exception {
     // Pick a key
@@ -57,7 +57,7 @@ public class torture_btree_ins_maxelement implements client_profile {
     ElementValueType vtype = ElementValueType.BYTEARRAY;
     CollectionAttributes attr = 
       new CollectionAttributes(cli.conf.client_exptime,
-                               new Long(200000),
+                               new Long(cli.conf.ins_element_size),
                                CollectionOverflowAction.smallest_trim);
     CollectionFuture<Boolean> fb = cli.next_ac.asyncBopCreate(key, vtype, attr);
     boolean ok = fb.get(1000L, TimeUnit.MILLISECONDS);
@@ -69,7 +69,7 @@ public class torture_btree_ins_maxelement implements client_profile {
       return false;
 
     // Insert elements
-    for (long bkey = base; bkey < base + 200000; bkey++) {
+    for (long bkey = base; bkey < base + cli.conf.ins_element_size; bkey++) {
       if (!cli.before_request())
         return false;
       byte[] val = cli.vset.get_value();

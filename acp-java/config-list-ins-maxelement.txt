@@ -30,3 +30,5 @@ client_exptime=-1
 pool=1
 pool_size=1
 pool_use_random=false
+
+ins_element_size=200000

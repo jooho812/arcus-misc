@@ -36,7 +36,7 @@ public class torture_list_ins_maxelement implements client_profile {
     return true;
   }
   
-  // create a list and insert 4000 elements and delete 4000.
+  // create a list and insert cli.conf.ins_element_size elements.
 
   public boolean do_list_test(client cli) throws Exception {
     // Pick a key
@@ -52,7 +52,7 @@ public class torture_list_ins_maxelement implements client_profile {
     ElementValueType vtype = ElementValueType.BYTEARRAY;
     CollectionAttributes attr = 
       new CollectionAttributes(cli.conf.client_exptime,
-                               new Long(200000),
+                               new Long(cli.conf.ins_element_size),
                                CollectionOverflowAction.head_trim);
     CollectionFuture<Boolean> fb = cli.next_ac.asyncLopCreate(key, vtype, attr);
     boolean ok = fb.get(1000L, TimeUnit.MILLISECONDS);
@@ -64,7 +64,7 @@ public class torture_list_ins_maxelement implements client_profile {
       return false;
 
     // Insert elements
-    for (long lkey = base; lkey < base + 200000; lkey++) {
+    for (long lkey = base; lkey < base + cli.conf.ins_element_size; lkey++) {
       if (!cli.before_request())
         return false;
       byte[] val = cli.vset.get_value();

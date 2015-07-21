@@ -37,7 +37,7 @@ public class torture_btree_ins_bulkdel implements client_profile {
     return true;
   }
   
-  // create a btree and insert 4000 elements, delete 4000
+  // create a btree and insert cli.conf.ins_element_size elements, delete cli.conf.act_element_size
 
   public boolean do_btree_test(client cli) throws Exception {
     // Pick a key
@@ -57,7 +57,7 @@ public class torture_btree_ins_bulkdel implements client_profile {
     ElementValueType vtype = ElementValueType.BYTEARRAY;
     CollectionAttributes attr = 
       new CollectionAttributes(cli.conf.client_exptime,
-                               new Long(200000),
+                               new Long(cli.conf.ins_element_size),
                                CollectionOverflowAction.smallest_trim);
     CollectionFuture<Boolean> fb = cli.next_ac.asyncBopCreate(key, vtype, attr);
     boolean ok = fb.get(1000L, TimeUnit.MILLISECONDS);
@@ -69,7 +69,7 @@ public class torture_btree_ins_bulkdel implements client_profile {
       return false;
 
     // Insert elements
-    for (long bkey = base; bkey < base + 200000; bkey++) {
+    for (long bkey = base; bkey < base + cli.conf.ins_element_size; bkey++) {
       if (!cli.before_request(false))
         return false;
       byte[] val = cli.vset.get_value();
@@ -92,12 +92,12 @@ public class torture_btree_ins_bulkdel implements client_profile {
         if (!cli.before_request())
           return false;
 
-        long bkey = base+1;
-        long bkey_to = base+100000;
+        long bkey = base + 1;
+        long bkey_to = base + cli.conf.act_element_size;
         CollectionFuture<Boolean> f =
           cli.next_ac.asyncBopDelete(key, bkey, bkey_to, filter,
                                      0, false);
-        ok = f.get(1000L, TimeUnit.MILLISECONDS);
+        ok = f.get(5000L, TimeUnit.MILLISECONDS);
         if (!ok) {
           System.out.printf("Collection_Btree: BopDelete failed." +
                             " id=%d key=%s: %s\n", cli.id, key,

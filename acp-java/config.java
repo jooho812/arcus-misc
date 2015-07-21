@@ -45,6 +45,8 @@ public class config {
   public String client_profile = "standard_mix";
   public int client_exptime = 100;
   public int client_mget_keys = 500;
+  public int ins_element_size = 50000;
+  public int act_element_size = 10000;
 
   public config() {
   }
@@ -169,6 +171,12 @@ public class config {
     }
     else if (key.equals("key_prefix")) {
       key_prefix = val;
+    }
+    else if (key.equals("ins_element_size")) {
+      ins_element_size = Integer.parseInt(val);
+    }
+    else if (key.equals("act_element_size")) {
+      act_element_size = Integer.parseInt(val);
     }
     else {
       throw new Exception("Unknown configuration key/value. line="+ line);

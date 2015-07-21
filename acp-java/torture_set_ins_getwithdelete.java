@@ -37,7 +37,7 @@ public class torture_set_ins_getwithdelete implements client_profile {
     return true;
   }
   
-  // create a set and insert 4000 elements and delete 4000
+  // create a set and insert elements and get(withDelete=true)
 
   public boolean do_set_test(client cli) throws Exception {
     // Pick a key
@@ -53,7 +53,7 @@ public class torture_set_ins_getwithdelete implements client_profile {
     ElementValueType vtype = ElementValueType.BYTEARRAY;
     CollectionAttributes attr = 
       new CollectionAttributes(cli.conf.client_exptime,
-                               new Long(200000),
+                               new Long(cli.conf.ins_element_size),
                                CollectionOverflowAction.error);
     CollectionFuture<Boolean> fb = cli.next_ac.asyncSopCreate(key, vtype, attr);
     boolean ok = fb.get(1000L, TimeUnit.MILLISECONDS);
@@ -65,7 +65,7 @@ public class torture_set_ins_getwithdelete implements client_profile {
       return false;
 
     // Insert elements
-    for (long skey = base; skey < base + 200000; skey++) {
+    for (long skey = base; skey < base + cli.conf.ins_element_size; skey++) {
       if (!cli.before_request(false))
         return false;
       byte[] val = new byte[10];
@@ -79,7 +79,7 @@ public class torture_set_ins_getwithdelete implements client_profile {
       }
       fb = cli.next_ac.asyncSopInsert(key, val,
                                       null /* Do not auto-create item */);
-      ok = fb.get(5000L, TimeUnit.MILLISECONDS);
+      ok = fb.get(1000L, TimeUnit.MILLISECONDS);
       if (!ok) {
         System.out.printf("sop insert failed. id=%d key=%s skey=%d: %s\n",
                           cli.id, key, skey,
@@ -93,7 +93,7 @@ public class torture_set_ins_getwithdelete implements client_profile {
     if (!cli.before_request())
       return false;
     CollectionFuture<Set<Object>> f =
-      cli.next_ac.asyncSopGet(key, 100000, true /* withDelete */,
+      cli.next_ac.asyncSopGet(key, cli.conf.act_element_size, true /* withDelete */,
                               true /* dropIfEmpty */);
     Set<Object> val = f.get(5000L, TimeUnit.MILLISECONDS);
     if (val == null || val.size() <= 0) {
