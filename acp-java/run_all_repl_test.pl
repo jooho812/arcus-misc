@@ -155,10 +155,14 @@ foreach $script (@script_list) {
   $cmd = "rm -f __can_test_failure__";
   system($cmd);
 
+  print "waiting until failure or switchover script ends...\n";
+  sleep 5; # for stopping loop.*.bash
+
   # Run comparison tool
   if ($compare_flag) {
-    sleep 5; # for stopping loop.*.bash
-    $cmd = "./start_memcached.bash"; # to make sure that both master & slave run
+    sleep 40; # for stopping loop.*.bash
+
+    $cmd = "./start_memcached.bash"; # to make sure that master & slave run
     $ret = system($cmd);
     sleep 5; # for starting memcached
 
