@@ -156,6 +156,18 @@ class acp {
     else if (conf.client_profile.equals("torture_arcus_integration")) {
       profile = new torture_arcus_integration();
     }
+    else if (conf.client_profile.equals("list_bulk_ins")) {
+      profile = new list_bulk_ins();
+    }
+    else if (conf.client_profile.equals("list_bulk_piped_ins")) {
+      profile = new list_bulk_piped_ins();
+    }
+    else if (conf.client_profile.equals("set_bulk_ins")) {
+      profile = new set_bulk_ins();
+    }
+    else if (conf.client_profile.equals("set_bulk_piped_ins")) {
+      profile = new set_bulk_piped_ins();
+    }
     if (profile == null) {
       System.out.println("Cannot find client profile=" + conf.client_profile);
       System.exit(0);
