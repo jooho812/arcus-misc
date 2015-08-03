@@ -177,6 +177,9 @@ class acp {
     else if (conf.client_profile.equals("simpe_prepend")) {
       profile = new simple_add();
     }
+    else if (conf.client_profile.equals("simpe_set_bulk")) {
+      profile = new simple_set_bulk();
+    }
     if (profile == null) {
       System.out.println("Cannot find client profile=" + conf.client_profile);
       System.exit(0);
