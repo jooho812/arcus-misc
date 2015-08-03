@@ -82,6 +82,9 @@ public class simple_set_bulk implements client_profile {
 	  cli.next_ac.asyncSetBulk(key_list, 600, val);
 	Map<String, CollectionOperationStatus> result =
 	  f.get(1000L, TimeUnit.MILLISECONDS);
+	if (result == null) {
+        System.out.printf("set bulk failed. id=%d key=%s\n", cli.id, key);
+	}
 
 	if (!cli.after_request(true))
 	  return false;
