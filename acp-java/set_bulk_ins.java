@@ -91,7 +91,7 @@ public class set_bulk_ins implements client_profile {
 	  return false;
 	ElementValueType vtype = ElementValueType.BYTEARRAY;
 	CollectionAttributes attr = 
-	  new CollectionAttributes(cli.conf.client_exptime
+	  new CollectionAttributes(cli.conf.client_exptime,
 					           CollectionAttributes.DEFAULT_MAXCOUNT,
 							   CollectionOverflowAction.tail_trim);
 
@@ -114,8 +114,9 @@ public class set_bulk_ins implements client_profile {
 
 	// repeat 4000
 	for (int i = 0; i < 4000; i++) {
+
 	  Future<Map<String, CollectionOperationStatus>> fbs = 
-	    cli.next_ac.asyncSopInsertBulk(key_list, -1, val, new CollectionAttributes());
+	    cli.next_ac.asyncSopInsertBulk(key_list, val, new CollectionAttributes());
 	  Map<String, CollectionOperationStatus> result = fbs.get(1000L, TimeUnit.MILLISECONDS);
 
 	  if (!cli.after_request(true))

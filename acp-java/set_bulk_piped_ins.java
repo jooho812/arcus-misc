@@ -42,10 +42,18 @@ public class set_bulk_piped_ins implements client_profile {
 
   String DEFAULT_PREFIX = "arcustest-";
   int KeyLen = 20;
+  int ExpireTime = 600;
   char[] dummystring = 
     ("1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
      "abcdefghijlmnopqrstuvwxyz").toCharArray();
   Random random = new Random(); // repeatable is okay
+  int[] chunk_sizes = {
+    96, 120, 152, 192, 240, 304, 384, 480, 600, 752, 944, 1184, 1480, 1856,
+    2320, 2904, 3632, 4544, 5680, 7104, 8880, 11104, 13880, 17352, 21696,
+    27120, 33904, 42384, 52984, 66232, 82792, 103496, 129376, 161720, 202152,
+    252696, 315872, 394840, 493552, 1048576
+  };
+  String[] chunk_values;
 
   String gen_key(String name) {
     if (name == null)
@@ -99,7 +107,7 @@ public class set_bulk_piped_ins implements client_profile {
 	  if (!cli.before_request())
 	    return false;
 	  CollectionFuture<Map<Integer, CollectionOperationStatus>> f = 
-	    cli.next_ac.asyncLopPipedInsertBulk(key_list.get(0), -1, elements,
+	    cli.next_ac.asyncLopPipedInsertBulk(key, -1, elements,
 						                    new CollectionAttributes());
 	  Map<Integer, CollectionOperationStatus> status_map = 
 			  f.get(1000L, TimeUnit.MILLISECONDS);
@@ -111,7 +119,7 @@ public class set_bulk_piped_ins implements client_profile {
 		if (resp != CollectionResponse.STORED) {
           System.out.printf("Collection Set: SopPipedInsertBulk failed." +
 						  " id=%d key=%s response=%s\n", cli.id,
-						                            key_list.get(0), resp);
+						                            key, resp);
 		}
 	  }
 	  if (!cli.after_request(true))
