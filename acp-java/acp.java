@@ -180,6 +180,15 @@ class acp {
     else if (conf.client_profile.equals("simpe_set_bulk")) {
       profile = new simple_set_bulk();
     }
+    else if (conf.client_profile.equals("simpe_get_bulk")) {
+      profile = new simple_get_bulk();
+    }
+    else if (conf.client_profile.equals("simpe_incr")) {
+      profile = new simple_incr();
+    }
+    else if (conf.client_profile.equals("simpe_decr")) {
+      profile = new simple_decr();
+    }
     if (profile == null) {
       System.out.println("Cannot find client profile=" + conf.client_profile);
       System.exit(0);
