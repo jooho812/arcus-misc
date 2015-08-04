@@ -17,14 +17,9 @@
  */
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.Map;
-import java.util.List;
-import java.util.LinkedList;
 import java.util.Random;
 
-import net.spy.memcached.ops.CollectionOperationStatus;
-
-public class simple_get_bulk implements client_profile {
+public class simple_async_decr implements client_profile {
 
   String DEFAULT_PREFIX = "arcustest-";
   int KeyLen = 20;
@@ -50,6 +45,7 @@ public class simple_get_bulk implements client_profile {
 	}
 	return ret;
   }
+
   public boolean do_test(client cli) {
     try {
       if (!do_simple_test(cli))
@@ -61,41 +57,37 @@ public class simple_get_bulk implements client_profile {
   }
 
   public boolean do_simple_test(client cli) throws Exception {
-    int loop_cnt = 100; 
- 
-	// Prepare Key list
+   
+	int by = 1;
+
+    if (!cli.before_request())
+	  return false;
+
 	String key = gen_key("Collection_Simple");
-	byte[] val = cli.vset.get_value();
+	String val = "10000";
 
 	// SET
-	List<String> key_list = new LinkedList<String>();
-	for (int i = 0; i < loop_cnt; i++) {
-	  key_list.add(key + i);
+	Future<Boolean> fb = 
+	  cli.next_ac.set(key, cli.conf.client_exptime, val);
+	boolean ok = fb.get(500L, TimeUnit.MILLISECONDS);
+	if (!cli.after_request(ok))
+	  return false;
 
-	  if (!cli.before_request())
-	    return false;
-	  Future<Boolean> fb = 
-	    cli.next_ac.set(key, cli.conf.client_exptime, val);
-	  boolean ok = fb.get(1000L, TimeUnit.MILLISECONDS);
-	  if (!ok) {
-        System.out.printf("add failed. id=%d key=%s\n", cli.id, key);
+	// Decr 100 times.
+	for (int i = 0; i < 100; i++) {
+      if (!cli.before_request())
+        return false;
+
+	  Future<Long> f = cli.next_ac.asyncDecr(key, by);
+	  Long result = f.get(500L, TimeUnit.MILLISECONDS);
+	  if (result == null) {
+        System.out.printf("key-value Decr failed. id=%d\n", cli.id);
 	  }
-	  if (!cli.after_request(ok))
+	  if (!cli.after_request(true))
 	    return false;
 	}
 
-	// getBulk
-	if (!cli.before_request())
-	  return false;
-
-	Map<String, Object> m = cli.next_ac.getBulk(key_list);
-	if (m == null) {
-      System.out.printf("get bulk failed. id=%d\n", cli.id);
-	}
-
-	if (!cli.after_request(true))
-	  return false;
-    
 	return true;
   }
+
 }

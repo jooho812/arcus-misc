@@ -183,6 +183,9 @@ class acp {
     else if (conf.client_profile.equals("simpe_get_bulk")) {
       profile = new simple_get_bulk();
     }
+    else if (conf.client_profile.equals("simpe_async_get_bulk")) {
+      profile = new simple_async_get_bulk();
+    }
     else if (conf.client_profile.equals("simpe_incr")) {
       profile = new simple_incr();
     }
