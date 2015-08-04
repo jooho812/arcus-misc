@@ -57,9 +57,7 @@ public class simple_decr implements client_profile {
   }
 
   public boolean do_simple_test(client cli) throws Exception {
-   
 	int by = 1;
-
     if (!cli.before_request())
 	  return false;
 
@@ -78,9 +76,10 @@ public class simple_decr implements client_profile {
       if (!cli.before_request())
         return false;
 
-	  Future<Long> f = cli.next_ac.asyncDecr(key, by);
-	  Long result = f.get(500L, TimeUnit.MILLISECONDS);
-	  if (result == null) {
+	  long result = 0L;
+	  result = cli.next_ac.decr(key, by);
+	  System.out.printf("result : %ld\n", result);
+	  if (result == 0L) {
         System.out.printf("key-value Decr failed. id=%d\n", cli.id);
 	  }
 	  if (!cli.after_request(true))

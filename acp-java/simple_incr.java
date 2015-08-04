@@ -51,15 +51,23 @@ public class simple_incr implements client_profile {
       if (!do_simple_test(cli))
 	    return false;
 	} catch (Exception e) {
-	  cli.after_request(false);
+      cli.after_request(false);
 	}
 	return true;
   }
 
+  public boolean my_wait() {
+    try {
+      Thread.sleep(5000);
+	} catch (Exception e) {
+      System.out.println(e.getMessage());
+	}
+
+    return true;
+  }
+
   public boolean do_simple_test(client cli) throws Exception {
-
 	int by = 1;
-
 	if (!cli.before_request())
 	  return false;
 
@@ -75,12 +83,15 @@ public class simple_incr implements client_profile {
 
 	// Incr 100 times.
 	for (int i = 0; i < 100; i++) {
+	  my_wait();
       if (!cli.before_request())
 	    return false;
 
-	  Future<Long> f = cli.next_ac.asyncIncr(key, by);
-	  Long result = f.get(500L, TimeUnit.MILLISECONDS);
-	  if (result == null) {
+	  long result = 0L;
+	  result = cli.next_ac.incr(key, by);
+
+	  System.out.printf("result : %ld\n", result);
+	  if (result == 0L) {
         System.out.printf("key-value Incr failed. id=%d\n", cli.id);
 	  }
       if (!cli.after_request(true))
@@ -88,6 +99,7 @@ public class simple_incr implements client_profile {
 	}
 
     return true;
+
   }
 
 }
