@@ -192,6 +192,9 @@ class acp {
     else if (conf.client_profile.equals("simpe_decr")) {
       profile = new simple_decr();
     }
+    else if (conf.client_profile.equals("set_exist")) {
+      profile = new set_exist();
+    }
     if (profile == null) {
       System.out.println("Cannot find client profile=" + conf.client_profile);
       System.exit(0);
