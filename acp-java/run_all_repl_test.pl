@@ -104,7 +104,7 @@ foreach $script (@script_list) {
     "valueset_min_size=10\n" .
     "valueset_max_size=4000\n" .
     "pool=1\n" .
-    "pool_size=30\n" .
+    "pool_size=10\n" .
     "pool_use_random=false\n" .
     "key_prefix=" . $script . ":\n" .
     "client_exptime=0\n" .
@@ -152,10 +152,11 @@ foreach $script (@script_list) {
   $ret = system($cmd);
   printf "EXIT CODE=%d\n", $ret;
 
+  $cmd = "date";
+  system($cmd);
+  print "Please wait a second until failure or switchover script ends...\n";
   $cmd = "rm -f __can_test_failure__";
   system($cmd);
-
-  print "waiting until failure or switchover script ends...\n";
   sleep 5; # for stopping loop.*.bash
 
   # Run comparison tool

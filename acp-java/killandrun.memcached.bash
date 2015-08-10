@@ -29,17 +29,20 @@ sleep_time=5
 
 mkdir -p pidfiles
 
-if [ -f "pidfiles/memcached.127.0.0.1:$port_num" ];
+if [ "$kill_type" != "NONE" ];
 then
-  echo ">>>>>> kill -$kill_type `cat pidfiles/memcached.127.0.0.1:$port_num`"
-  kill -$kill_type `cat pidfiles/memcached.127.0.0.1:$port_num`
-  if [ "$kill_type" == "KILL" ];
+  if [ -f "pidfiles/memcached.127.0.0.1:$port_num" ];
   then
-    sleep_time=40
+    echo ">>>>>> kill -$kill_type `cat pidfiles/memcached.127.0.0.1:$port_num`"
+    kill -$kill_type `cat pidfiles/memcached.127.0.0.1:$port_num`
+    if [ "$kill_type" == "KILL" ];
+    then
+      sleep_time=40
+    fi
+    echo ">>>>>> wait a second to terminate $pidfile : `date`"
+    echo ">>>>>> sleep for $sleep_time"
+    sleep $sleep_time
   fi
-  echo ">>>>>> wait a second to terminate $pidfile : `date`"
-  echo ">>>>>> sleep for $sleep_time"
-  sleep $sleep_time
 fi
 
 echo ">>>>>> start memcached as $pidfile... : `date`"
