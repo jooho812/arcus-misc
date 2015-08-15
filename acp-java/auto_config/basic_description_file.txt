@@ -1,0 +1,620 @@
+[config-arcus-integration.txt]
+#single_server=cachehost:11212
+
+client=8
+
+rate=0
+time=6000
+
+keyset_size=10000000
+key_prefix=simple_decinc:
+valueset_min_size=10
+valueset_max_size=10
+
+client_profile=torture_arcus_integration
+
+pool_size=8
+
+
+[config-btree-ins-bulkdel.txt]
+
+#single_server=cachehost:21111
+
+# How many acp clients (threads) to use?
+client=1
+
+#
+time=240
+
+key_prefix=btreebulkdel:
+valueset_min_size=2048
+valueset_max_size=2048
+
+client_profile=torture_btree_ins_bulkdel
+client_exptime=0
+
+pool_size=1
+
+[config-btree-ins-getwithdelete.txt]
+#single_server=cachehost:21111
+
+# How many acp clients (threads) to use?
+client=1
+
+#
+time=240
+
+key_prefix=btreegetwithdelete:
+valueset_min_size=2048
+valueset_max_size=2048
+
+client_profile=torture_btree_ins_getwithdelete
+client_exptime=0
+
+pool_size=1
+
+[config-btree-ins-maxelement.txt]
+#single_server=cachehost:21111
+
+# How many acp clients (threads) to use?
+client=1
+
+#
+time=240
+
+keyset_size=2
+key_prefix=btreemaxelem:
+valueset_min_size=4000
+valueset_max_size=4000
+
+client_profile=torture_btree_ins_maxelement
+client_exptime=-1
+
+pool_size=1
+
+[config-cas.txt]
+#single_server=cachehost:11212
+
+# How many acp clients (threads) to use?
+client=300
+
+key_prefix=simple_cas:
+valueset_max_size=1000
+
+client_profile=torture_cas
+
+# Java client settings
+
+# Each pool creates this many ArcusClient's.
+# acp clients are evenly spread across ArcusClient's.
+pool_size=300
+
+[config-create-keys.txt]
+
+single_server=cachehost:20120
+
+client=1
+
+request=2000
+time=0
+
+# Keys
+keyset_profile=numeric
+keyset_size=1000
+keyset_length=50
+#key_prefix=
+
+# Values
+valueset_profile=default
+valueset_min_size=30
+valueset_max_size=30
+
+# Clients
+client_profile=create_keys
+client_exptime=0
+
+pool_size=1
+
+[config-demo-graceful-failover.txt]
+
+service_code=graceful-failover
+
+client=40
+
+#rate=100
+
+# inter-request gap (msec)
+irg=8
+
+#
+time=0
+
+key_prefix=simple:
+
+client_profile=simple_getset
+
+pool_size=4
+
+[config-demo-high-speed.txt]
+
+service_code=high-speed
+
+client=80
+
+#rate=100
+
+# inter-request gap (msec)
+#irg=8
+
+#
+time=0
+
+key_prefix=simple:
+
+client_profile=simple_getset
+
+pool_size=80
+
+[config-demo-kill-failover.txt]
+#
+service_code=kill-failover
+
+client=40
+
+#rate=100
+
+# inter-request gap (msec)
+irg=8
+
+#
+time=0
+
+key_prefix=simple:
+
+client_profile=simple_getset
+
+pool_size=4
+
+[config-gc.txt]
+
+#single_server=cachehost:20120
+
+client=12
+
+time=0
+
+# Keys
+keyset_size=10000
+
+# Values
+valueset_profile=default
+#valueset_min_size=10000
+#valueset_max_size=14000
+#valueset_min_size=6000
+#valueset_max_size=6000
+valueset_min_size=12000
+valueset_max_size=12000
+
+# Clients
+client_profile=create_keys
+
+pool_size=30
+
+[config-gc-btree-elem.txt]
+
+#single_server=cachehost:20120
+
+client=12
+
+time=0
+
+# Keys
+keyset_size=1000
+
+# Values
+valueset_profile=default
+valueset_min_size=4000
+valueset_max_size=4000
+
+# Clients
+client_profile=btree_elem_upsert
+
+pool_size=30
+
+[config-get-keys.txt]
+
+single_server=cachehost:20120
+
+client=80
+
+time=0
+
+# Keys
+keyset_profile=numeric
+keyset_size=1000
+keyset_length=50
+#key_prefix=
+
+# Values
+valueset_profile=default
+valueset_min_size=30
+valueset_max_size=30
+
+# Clients
+client_profile=get
+
+pool_size=80
+
+[config-large-items.txt]
+
+#single_server=cachehost:11212
+
+# How many acp clients (threads) to use?
+client=3
+
+#
+time=600
+
+keyset_size=1000000
+key_prefix=large:
+valueset_min_size=10240
+# hash_item+key+value+pads <= max 1MB
+valueset_max_size=1048480
+
+#valueset_min_size=10240
+#valueset_max_size=1048576
+
+client_profile=simple_set
+
+# Java client settings
+
+# Each pool creates this many ArcusClient's.
+# acp clients are evenly spread across ArcusClient's.
+pool_size=3
+
+[config-latency.txt]
+
+keyset_size=100000
+valueset_min_size=10
+valueset_max_size=10
+
+client_profile=simple_set
+
+# Java client settings
+
+[config-list-ins-bulkdel.txt]
+
+# How many acp clients (threads) to use?
+client=1
+
+#
+time=240
+
+key_prefix=listbulkdel:
+valueset_min_size=2048
+valueset_max_size=2048
+
+client_profile=torture_list_ins_bulkdel
+client_exptime=0
+
+pool_size=1
+
+[config-list-ins-getwithdelete.txt]
+
+# How many acp clients (threads) to use?
+client=1
+
+#
+time=240
+
+key_prefix=listgetwithdelete:
+valueset_min_size=2048
+valueset_max_size=2048
+
+client_profile=torture_list_ins_getwithdelete
+client_exptime=0
+
+pool_size=1
+
+
+[config-list-ins-maxelement.txt]
+
+# How many acp clients (threads) to use?
+client=1
+
+#
+time=240
+
+keyset_size=2
+key_prefix=listmaxelem:
+valueset_min_size=4000
+valueset_max_size=4000
+
+client_profile=torture_list_ins_maxelement
+client_exptime=-1
+
+pool_size=1
+
+[config-max-bop.txt]
+
+key_prefix=btree:
+valueset_min_size=10
+valueset_max_size=10
+
+client_profile=torture_btree
+
+# Java client settings
+
+# Each pool creates this many ArcusClient's.
+# acp clients are evenly spread across ArcusClient's.
+pool_size=10
+
+[config-max-lop.txt]
+
+valueset_min_size=10
+valueset_max_size=10
+
+client_profile=torture_list
+
+[config-max-rate.txt]
+
+# How many acp clients (threads) to use?
+client=30
+
+key_prefix=simple:
+valueset_min_size=10
+valueset_max_size=10
+
+client_profile=simple_set
+
+# Java client settings
+
+# Each pool creates this many ArcusClient's.
+# acp clients are evenly spread across ArcusClient's.
+pool_size=30
+
+
+[config-max-sop.txt]
+
+# How many acp clients (threads) to use?
+valueset_min_size=10
+valueset_max_size=10
+
+client_profile=torture_set
+
+[config-mget-500.txt]
+
+client=30
+
+request=100000
+time=0
+
+# Keys
+keyset_profile=numeric
+keyset_size=1000
+keyset_length=50
+#key_prefix=
+
+# Values
+valueset_profile=default
+valueset_min_size=30
+valueset_max_size=30
+
+# Clients
+client_profile=mget
+client_mget_keys=500
+
+pool_size=30
+
+[config-mget-create-keys.txt]
+
+client=1
+
+request=2000
+time=0
+
+# Keys
+keyset_profile=numeric
+keyset_size=1000
+keyset_length=50
+#key_prefix=
+
+# Values
+valueset_profile=default
+valueset_min_size=30
+valueset_max_size=30
+
+# Clients
+client_profile=create_keys
+client_exptime=2000
+
+pool_size=1
+
+[config-set-ins-getwithdelete.txt]
+
+# How many acp clients (threads) to use?
+client=1
+
+#
+time=240
+
+key_prefix=setgetwithdelete:
+valueset_min_size=2048
+valueset_max_size=2048
+
+client_profile=torture_set_ins_getwithdelete
+client_exptime=0
+
+pool_size=1
+
+[config-simple-decinc.txt]
+
+#
+rate=0
+
+#
+request=0
+
+#
+time=6000
+
+keyset_size=10000000
+key_prefix=simple_decinc:
+valueset_min_size=10
+valueset_max_size=10
+
+client_profile=torture_simple_decinc
+
+# Java client settings
+
+# Each pool creates this many ArcusClient's.
+# acp clients are evenly spread across ArcusClient's.
+pool_size=10
+
+[config-simple-getset.txt]
+
+#single_server=cachehost:21111
+
+#
+#rate=100
+
+key_prefix=simple:
+
+client_profile=simple_getset
+
+[config-simple-set.1mb.txt]
+
+#single_server=cachehost:21111
+
+# How many acp clients (threads) to use?
+client=1
+
+#
+time=240
+
+keyset_size=500
+key_prefix=simplelarge:
+valueset_min_size=1048000
+valueset_max_size=1048000
+
+client_profile=simple_set
+client_exptime=0
+
+pool_size=1
+
+[config-simple-sticky.txt]
+
+#single_server=cachehost:11212
+
+# How many acp clients (threads) to use?
+client=20
+
+keyset_size=10000000
+key_prefix=simple_sticky:
+valueset_min_size=10
+valueset_max_size=1000
+
+client_profile=torture_simple_sticky
+
+# Java client settings
+
+# Each pool creates this many ArcusClient's.
+# acp clients are evenly spread across ArcusClient's.
+pool_size=20
+
+[config-standard-mix.txt]
+
+#single_server=cachehost:20120
+
+client=20
+
+time=0
+
+# Values
+valueset_profile=default
+valueset_min_size=30
+valueset_max_size=2000
+
+# Clients
+client_profile=standard_mix
+
+pool_size=20
+
+[config-standard-mix-noexp.txt]
+# ZooKeeper and ServiceCode
+# the number of client threads.
+client=20
+
+# Control requests
+# total requests  
+request=50000
+# run time (unit: seconds) 
+time=0
+
+# Keys
+key_prefix=standard_mix:
+
+# Values
+valueset_profile=default
+valueset_min_size=30
+valueset_max_size=2000
+
+# Clients
+client_profile=standard_mix
+# expire time
+client_exptime=0
+
+pool_size=20
+
+[config-test.txt]
+
+# How many acp clients (threads) to use?
+client=20
+
+valueset_min_size=10
+valueset_max_size=2000
+
+#key_prefix=btree:
+#client_profile=torture_btree_replace
+
+#key_prefix=btree:
+#client_profile=torture_btree_ins_del
+
+#key_prefix=btree:
+#client_profile=torture_btree_decinc
+
+#key_prefix=btree:
+#client_profile=torture_btree_exptime
+
+#key_prefix=btree:
+#client_profile=torture_btree_bytebkey
+
+#key_prefix=btree:
+#client_profile=torture_btree_maxbkeyrange
+
+key_prefix=btree:
+client_profile=torture_btree_bytemaxbkeyrange
+
+#key_prefix=set:
+#client_profile=torture_set_ins_del
+
+#key_prefix=list:
+#client_profile=torture_list_ins_del
+
+pool_size=20
+
+[config-tiny-btree.txt]
+#single_server=cachehost:11212
+
+keyset_size=10000000
+valueset_min_size=10
+valueset_max_size=10
+
+client_profile=tiny_btree
+
+# Java client settings
+
+# Each pool creates this many ArcusClient's.
+# acp clients are evenly spread across ArcusClient's.
+pool_size=10
+
