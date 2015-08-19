@@ -57,7 +57,6 @@ public class list_bulk_piped_ins implements client_profile {
   }
 
   String DEFAULT_PREFIX = "arcustest-";
-  int ExpireTime = 600;
   int KeyLen = 20;
   char[] dummystring = 
     ("1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
@@ -106,7 +105,7 @@ public class list_bulk_piped_ins implements client_profile {
 	String key = gen_key("Collection_List");
 
 	CollectionAttributes attr = new CollectionAttributes();
-	attr.setExpireTime(ExpireTime);
+	attr.setExpireTime(cli.conf.client_exptime);
 
 	String[] workloads = { chunk_values[1],
 						   chunk_values[1],

@@ -42,7 +42,6 @@ public class set_bulk_piped_ins implements client_profile {
 
   String DEFAULT_PREFIX = "arcustest-";
   int KeyLen = 20;
-  int ExpireTime = 600;
   char[] dummystring = 
     ("1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
      "abcdefghijlmnopqrstuvwxyz").toCharArray();
@@ -90,7 +89,7 @@ public class set_bulk_piped_ins implements client_profile {
 	String key = gen_key("Collection_Set");
 
 	CollectionAttributes attr = new CollectionAttributes();
-	attr.setExpireTime(ExpireTime);
+	attr.setExpireTime(cli.conf.client_exptime);
 
 	String[] workloads = { chunk_values[1],
 			               chunk_values[1],
