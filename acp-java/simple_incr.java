@@ -56,16 +56,6 @@ public class simple_incr implements client_profile {
 	return true;
   }
 
-  public boolean my_wait() {
-    try {
-      Thread.sleep(5000);
-	} catch (Exception e) {
-      System.out.println(e.getMessage());
-	}
-
-    return true;
-  }
-
   public boolean do_simple_test(client cli) throws Exception {
 	int by = 1;
 	if (!cli.before_request())
@@ -83,7 +73,6 @@ public class simple_incr implements client_profile {
 
 	// Incr 100 times.
 	for (int i = 0; i < 100; i++) {
-	  my_wait();
       if (!cli.before_request())
 	    return false;
 
