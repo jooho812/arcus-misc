@@ -69,7 +69,7 @@ public class simple_async_decr implements client_profile {
 	// SET
 	Future<Boolean> fb = 
 	  cli.next_ac.set(key, cli.conf.client_exptime, val);
-	boolean ok = fb.get(500L, TimeUnit.MILLISECONDS);
+	boolean ok = fb.get(1000L, TimeUnit.MILLISECONDS);
 	if (!cli.after_request(ok))
 	  return false;
 
@@ -79,7 +79,7 @@ public class simple_async_decr implements client_profile {
         return false;
 
 	  Future<Long> f = cli.next_ac.asyncDecr(key, by);
-	  Long result = f.get(500L, TimeUnit.MILLISECONDS);
+	  Long result = f.get(1000L, TimeUnit.MILLISECONDS);
 	  if (result == null) {
         System.out.printf("key-value Decr failed. id=%d\n", cli.id);
 	  }

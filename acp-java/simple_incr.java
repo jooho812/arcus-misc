@@ -67,7 +67,7 @@ public class simple_incr implements client_profile {
     // SET
 	Future<Boolean> fb = 
 	  cli.next_ac.set(key, cli.conf.client_exptime, val);
-	boolean ok = fb.get(500L, TimeUnit.MILLISECONDS);
+	boolean ok = fb.get(1000L, TimeUnit.MILLISECONDS);
 	if (!cli.after_request(ok))
 	  return false;
 

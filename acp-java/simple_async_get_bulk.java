@@ -79,7 +79,7 @@ public class simple_async_get_bulk implements client_profile {
 	  
 	  Future<Boolean> fb =
 	    cli.next_ac.set(key, cli.conf.client_exptime, val);
-	  boolean ok = fb.get(500L, TimeUnit.MILLISECONDS);
+	  boolean ok = fb.get(1000L, TimeUnit.MILLISECONDS);
 	  if (!ok) {
         System.out.printf("set failed. id=%d key=%s\n", cli.id, key);
 	  }

@@ -31,7 +31,7 @@ public class simple_append implements client_profile {
 
   public boolean do_simple_test(client cli) throws Exception {
 
-	long not_used = 100L;
+	long not_used = 1000L;
 
 	if (!cli.before_request())
 	  return false;
