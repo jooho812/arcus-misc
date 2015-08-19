@@ -39,12 +39,35 @@ import net.spy.memcached.ops.CollectionOperationStatus;
 
 public class list_bulk_ins implements client_profile {
 
+  public list_bulk_ins() {
+    int next_val_idx = 0;
+	chunk_values = new String[chunk_sizes.length+1];
+	chunk_values[next_val_idx++] = "Not_a_slab_class";
+    String lowercase = "abcdefghijlmnopqrstuvwxyz";
+	
+    for (int s : chunk_sizes) {
+      int len = s*2/3;
+      char[] raw = new char[len];
+      for (int i = 0; i < len; i++) {
+        raw[i] = lowercase.charAt(random.nextInt(lowercase.length()));
+      }
+      chunk_values[next_val_idx++] = new String(raw);
+    }
+  }
+
   String DEFAULT_PREFIX = "arcustest-";
   int KeyLen = 20;
   char[] dummystring = 
     ("1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
      "abcdefghijlmnopqrstuvwxyz").toCharArray();
   Random random = new Random(); // repeatable is okay
+  int[] chunk_sizes = {
+    96, 120, 152, 192, 240, 304, 384, 480, 600, 752, 944, 1184, 1480, 1856,
+    2320, 2904, 3632, 4544, 5680, 7104, 8880, 11104, 13880, 17352, 21696,
+    27120, 33904, 42384, 52984, 66232, 82792, 103496, 129376, 161720, 202152,
+    252696, 315872, 394840, 493552, 1048576
+  };
+  String[] chunk_values;
 
   String gen_key(String name) {
     if (name == null)
@@ -82,9 +105,15 @@ public class list_bulk_ins implements client_profile {
     // Prepare Key list
 	String key = gen_key("Collection_List");
 
+	String[] workloads = { chunk_values[1],
+						   chunk_values[1],
+						   chunk_values[2],
+				           chunk_values[2],
+			               chunk_values[3] };
+
 	List<String> key_list = new LinkedList<String>();	
     for (int i = 0; i < loop_cnt; i++)
-	  key_list.add(key + i);
+	  key_list.add(Integer.toString(i) + "_" + workloads[0]);
 
 	// Create a list item
 	if (!cli.before_request())

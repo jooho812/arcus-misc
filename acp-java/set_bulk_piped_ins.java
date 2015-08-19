@@ -40,6 +40,22 @@ import net.spy.memcached.ops.CollectionOperationStatus;
 
 public class set_bulk_piped_ins implements client_profile {
 
+  public set_bulk_piped_ins() {
+    int next_val_idx = 0;
+	chunk_values = new String[chunk_sizes.length+1];
+	chunk_values[next_val_idx++] = "Not_a_slab_class";
+    String lowercase = "abcdefghijlmnopqrstuvwxyz";
+	
+    for (int s : chunk_sizes) {
+      int len = s*2/3;
+      char[] raw = new char[len];
+      for (int i = 0; i < len; i++) {
+        raw[i] = lowercase.charAt(random.nextInt(lowercase.length()));
+      }
+      chunk_values[next_val_idx++] = new String(raw);
+    }
+  }
+
   String DEFAULT_PREFIX = "arcustest-";
   int KeyLen = 20;
   char[] dummystring = 
@@ -128,41 +144,3 @@ public class set_bulk_piped_ins implements client_profile {
 	return true;
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
