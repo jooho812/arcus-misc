@@ -45,7 +45,7 @@ public class simple_getset implements client_profile {
     byte[] val = cli.vset.get_value();
     Future<Boolean> fb = 
       cli.next_ac.set(key, cli.conf.client_exptime, val, raw_transcoder.raw_tc);
-    boolean ok = fb.get(500L, TimeUnit.MILLISECONDS);
+    boolean ok = fb.get(1000L, TimeUnit.MILLISECONDS);
     if (!ok) {
       System.out.printf("set failed. id=%d key=%s\n", cli.id, key);
     }
@@ -55,7 +55,7 @@ public class simple_getset implements client_profile {
     if (!cli.before_request())
       return false;
     Future<byte[]> f = cli.next_ac.asyncGet(key, raw_transcoder.raw_tc);
-    val = f.get(500L, TimeUnit.MILLISECONDS);
+    val = f.get(1000L, TimeUnit.MILLISECONDS);
     ok = true;
     if (val == null) {
       System.out.printf("get failed. id=%d key=%s\n", cli.id, key);

@@ -28,24 +28,6 @@ public class simple_del implements client_profile {
      "abcdefghijlmnopqrstuvwxyz").toCharArray();
   Random random = new Random(); // repeatable is okay
 
-  String gen_key(String name) {
-    if (name == null)
-	  name = "unknown";
-      String prefix = DEFAULT_PREFIX;
-	  String key = generateData(KeyLen);
-	  return prefix + name + ":" + key;
-  }
-
-  String generateData(int length) {
-    String ret = "";
-	for (int loop = 0; loop < length; loop++) {
-	  int randomInt = random.nextInt(60);
-	  char tempchar = dummystring[randomInt];
-	  ret = ret + tempchar;
-	}
-	return ret;
-  }
-
   public boolean do_test(client cli) {
     try {
       if (!do_simple_test(cli))
@@ -58,19 +40,19 @@ public class simple_del implements client_profile {
 
   public boolean do_simple_test(client cli) throws Exception {
 
-	String key = gen_key("Collection_Simple");
+	String key = cli.ks.get_key();
 	byte[] val = cli.vset.get_value();
 
 	// SET
 	Future<Boolean> fb = 
 	  cli.next_ac.set(key, cli.conf.client_exptime, val);
-	boolean ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+	boolean ok = fb.get(500L, TimeUnit.MILLISECONDS);
 	if (!cli.after_request(ok))
 	  return false;
 
 	// DELETE
 	fb = cli.next_ac.delete(key);
-	ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+	ok = fb.get(500L, TimeUnit.MILLISECONDS);
 	if (!cli.after_request(ok))
 	  return false;
 

@@ -34,24 +34,6 @@ public class set_exist implements client_profile {
      "abcdefghijlmnopqrstuvwxyz").toCharArray();
   Random random = new Random(); // repeatable is okay
 
-  String gen_key(String name) {
-    if (name == null)
-	  name = "unknown";
-      String prefix = DEFAULT_PREFIX;
-	  String key = generateData(KeyLen);
-	  return prefix + name + ":" + key;
-  }
-
-  String generateData(int length) {
-    String ret = "";
-	for (int loop = 0; loop < length; loop++) {
-	  int randomInt = random.nextInt(60);
-	  char tempchar = dummystring[randomInt];
-	  ret = ret + tempchar;
-	}
-	return ret;
-  }
-
   public boolean do_test(client cli) {
     try {
 	  if (!do_set_test(cli))
@@ -67,7 +49,7 @@ public class set_exist implements client_profile {
   public boolean do_set_test(client cli) throws Exception {
 
     // Pick a key
-	String key = gen_key("Collection_Set");
+	String key = cli.ks.get_key();
 	byte[] val = cli.vset.get_value();
 	assert(val.length <= 4096);
 

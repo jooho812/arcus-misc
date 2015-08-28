@@ -69,24 +69,6 @@ public class set_bulk_ins implements client_profile {
   };
   String[] chunk_values;
 
-  String gen_key(String name) {
-    if (name == null)
-	  name = "unknown";
-      String prefix = DEFAULT_PREFIX;
-	  String key = generateData(KeyLen);
-	  return prefix + name + ":" + key;
-  }
-
-  String generateData(int length) {
-    String ret = "";
-	for (int loop = 0; loop < length; loop++) {
-	  int randomInt = random.nextInt(60);
-	  char tempchar = dummystring[randomInt];
-	  ret = ret + tempchar;
-	}
-	return ret;
-  }
-
   public boolean do_test(client cli) {
     try {
 	  if (!do_set_test(cli))
@@ -103,7 +85,7 @@ public class set_bulk_ins implements client_profile {
 	int loop_cnt = 100;
 
     // Prepare Key list
-	String key = gen_key("Collection_Set");
+	String key = cli.ks.get_key();
 
 	String[] workloads = { chunk_values[1],
 			               chunk_values[1],
