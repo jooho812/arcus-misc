@@ -17,7 +17,8 @@ ACP_SRC = acp.c common.c config.c keyset.c valueset.c client.c lat_vec.c \
 	torture_list_ins_del.c torture_simple_decinc.c \
 	torture_simple_zero_exptime.c torture_simple_sticky.c \
 	torture_simple_cas.c torture_btree_bytemaxbkeyrange.c \
-	simple_getset.c
+	simple_getset.c \
+	simple_add.c simple_append.c simple_prepend.c \
 ACP_OBJ = $(ACP_SRC:.c=.o)
 
 all: acp

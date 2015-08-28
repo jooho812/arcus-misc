@@ -25,6 +25,9 @@ struct client_profile {
 
 struct client_profile *standard_mix_init(void);
 struct client_profile *simple_set_init(void);
+struct client_profile *simple_add_init(void);
+struct client_profile *simple_append_init(void);
+struct client_profile *simple_prepend_init(void);
 struct client_profile *simple_getset_init(int get_count);
 struct client_profile *torture_simple_decinc_init(void);
 struct client_profile *torture_simple_cas_init(void);

@@ -78,6 +78,12 @@ setup(void)
     prof = standard_mix_init();
   else if (0 == strcmp(conf.client_profile, "simple_set"))
     prof = simple_set_init();
+  else if (0 == strcmp(conf.client_profile, "simple_add"))
+    prof = simple_add_init();
+  else if (0 == strcmp(conf.client_profile, "simple_append"))
+    prof = simple_append_init();
+  else if (0 == strcmp(conf.client_profile, "simple_prepend"))
+    prof = simple_prepend_init();
   else if (0 == strcmp(conf.client_profile, "simple_getset"))
     prof = simple_getset_init(conf.client_simple_getset_get_count);
   else if (0 == strcmp(conf.client_profile, "torture_simple_decinc"))
