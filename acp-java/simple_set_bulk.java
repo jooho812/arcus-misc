@@ -108,7 +108,7 @@ public class simple_set_bulk implements client_profile {
 	  return false;
 
 	Future<Map<String, CollectionOperationStatus>> f = 
-	  cli.next_ac.asyncSetBulk(key_list, 600, val);
+	  cli.next_ac.asyncSetBulk(key_list, cli.conf.client_exptime, val);
 	Map<String, CollectionOperationStatus> result =
 	  f.get(1000L, TimeUnit.MILLISECONDS);
 	if (result == null) {
