@@ -28,6 +28,20 @@ run_master_stop=1
 run_switchover=1
 run_none=1
 
+all_test=1
+
+if [ $all_test -eq 0 ];
+then
+run_all_kill=0
+run_slave_kill=0
+run_master_kill=0
+run_all_stop=0
+run_slave_stop=0
+run_master_stop=0
+run_switchover=0
+run_none=1
+fi
+
 rm -f repl_test.*.$COUNTER.log
 
 # all_kill
