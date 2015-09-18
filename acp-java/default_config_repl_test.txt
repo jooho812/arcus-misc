@@ -1,0 +1,15 @@
+zookeeper=127.0.0.1:2181
+service_code=test
+client=30
+rate=0
+request=0
+time=100
+keyset_size=1000000
+valueset_min_size=10
+valueset_max_size=4000
+pool=1
+pool_size=10
+pool_use_random=false
+key_prefix=simple_getset
+client_exptime=0
+client_profile=simple_getset

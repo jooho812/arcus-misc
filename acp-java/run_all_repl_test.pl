@@ -3,7 +3,7 @@
 $m_port = 0; # master port
 $s_port = 0; # slave  port
 $failure_type = "none"; # failure type
-$run_dumration = 0;
+$run_duration = 0;
 $compare_flag = 0;
 
 sub print_usage {
@@ -11,10 +11,10 @@ sub print_usage {
 }
 
 if ($#ARGV >= 3 && $#ARGV <= 4) {
-  $m_port = $ARGV[0]; 
-  $s_port = $ARGV[1]; 
-  $failure_type = $ARGV[2]; 
-  $run_duration = $ARGV[3]; 
+  $m_port = $ARGV[0];
+  $s_port = $ARGV[1];
+  $failure_type = $ARGV[2];
+  $run_duration = $ARGV[3];
   if ($#ARGV == 4) {
     if ($ARGV[4] eq 'compare') {
       $compare_flag = 1;
@@ -22,14 +22,14 @@ if ($#ARGV >= 3 && $#ARGV <= 4) {
       print_usage();
       die;
     }
-  }  
+  }
   print "master_port = $m_port\n";
   print "slave_port  = $s_port\n";
   print "failure_type  = $failure_type\n";
   print "run_duration = $run_duration\n";
   print "compare_flag = $compare_flag\n";
 } else {
-  print_usage(); 
+  print_usage();
   die;
 }
 
@@ -43,7 +43,7 @@ print "filename = $filename\n";
 print "dir_path = $dir_path\n";
 
 $jar_path = "$dir_path/../../arcus-java-client/target";
-$cls_path = "$jar_path/arcus-java-client-1.8.1.jar" .
+$cls_path = "$jar_path/arcus-java-client-1.8.2.jar" .
     ":$jar_path/zookeeper-3.4.5.jar:$jar_path/log4j-1.2.16.jar" .
     ":$jar_path/slf4j-api-1.6.1.jar:$jar_path/slf4j-log4j12-1.6.1.jar";
 
@@ -53,33 +53,61 @@ $comp_cmd = "java -classpath $cls_path:$comp_dir" .
             " -server localhost:$m_port -server localhost:$s_port";
 print "comp_cmd = $comp_cmd\n";
 
-@script_list = (
-    "standard_mix"
-  , "simple_getset"
-  , "simple_set"
-  , "tiny_btree"
-  , "torture_arcus_integration"
-  , "torture_btree"
-  , "torture_btree_bytebkey"
-  , "torture_btree_bytemaxbkeyrange"
-  , "torture_btree_decinc"
-  , "torture_btree_exptime"
-  , "torture_btree_ins_del"
-  , "torture_btree_maxbkeyrange"
-  , "torture_btree_replace"
-  , "torture_cas"
-  , "torture_list"
-  , "torture_list_ins_del"
-  , "torture_set"
-  , "torture_set_ins_del"
-  , "torture_simple_decinc"
-  #, "torture_simple_sticky"
+# Create a temporary default config file to run the test
+open CONF, ">tmp-default-config.txt" or die $!;
+print CONF
+  "zookeeper=127.0.0.1:2181\n" .
+  "service_code=test\n" .
+  "client=30\n" .
+  "rate=0\n" .
+  "request=0\n" .
+  "time=" . $run_duration . "\n" .
+  "keyset_size=1000000\n" .
+  "valueset_min_size=10\n" .
+  "valueset_max_size=4000\n" .
+  "pool=1\n" .
+  "pool_size=10\n" .
+  "pool_use_random=false\n" .
+  "client_exptime=0\n";
+close CONF;
+
+$cmd = "perl config_file_generator.pl tmp-default-config.txt basic_repl_test_description.txt";
+system($cmd);
+
+@configfile_list = (
+    "config-repl-standard_mix.txt"
+  , "config-repl-simple_getset.txt"
+  , "config-repl-simple_set.txt"
+  , "config-repl-tiny_btree.txt"
+  , "config-repl-torture_arcus_integration.txt"
+  , "config-repl-torture_btree.txt"
+  , "config-repl-torture_btree_bytebkey.txt"
+  , "config-repl-torture_btree_bytemaxbkeyrange.txt"
+  , "config-repl-torture_btree_decinc.txt"
+  , "config-repl-torture_btree_exptime.txt"
+  , "config-repl-torture_btree_ins_del.txt"
+  , "config-repl-torture_btree_maxbkeyrange.txt"
+  , "config-repl-torture_btree_replace.txt"
+  , "config-repl-torture_cas.txt"
+  , "config-repl-torture_list.txt"
+  , "config-repl-torture_list_ins_del.txt"
+  , "config-repl-torture_set.txt"
+  , "config-repl-torture_set_ins_del.txt"
+  , "config-repl-torture_simple_decinc.txt"
+  , "config-repl-torture_list_ins_bulkdel.txt"
+  , "config-repl-torture_btree_ins_bulkdel.txt"
+  , "config-repl-torture_list_ins_maxelement.txt"
+  , "config-repl-torture_list_ins_getwithdelete.txt"
+  , "config-repl-torture_btree_ins_getwithdelete.txt"
+  , "config-repl-torture_set_ins_getwithdelete.txt"
+  , "config-repl-simple_set_1mb.txt"
+  , "config-repl-torture_btree_ins_maxelement.txt"
 );
 
 #$cmd = "rm -f __can_test_failure__";
 #system($cmd);
 
-foreach $script (@script_list) {
+foreach $configfile (@configfile_list) {
   # Flush all before each test
   $cmd = "./flushall.bash localhost $m_port";
   print "DO_FLUSH_ALL. $cmd\n";
@@ -90,26 +118,6 @@ foreach $script (@script_list) {
   print "DO_FLUSH_ALL. $cmd\n";
   system($cmd);
   sleep 1;
-
-  # Create a temporary config file to run the test
-  open CONF, ">tmp-config.txt" or die $!;
-  print CONF 
-    "zookeeper=127.0.0.1:2181\n" .
-    "service_code=test\n" .
-    "client=30\n" .
-    "rate=0\n" .
-    "request=0\n" .
-    "time=" . $run_duration . "\n" .
-    "keyset_size=1000000\n" .
-    "valueset_min_size=10\n" .
-    "valueset_max_size=4000\n" .
-    "pool=1\n" .
-    "pool_size=10\n" .
-    "pool_use_random=false\n" .
-    "key_prefix=" . $script . ":\n" .
-    "client_exptime=0\n" .
-    "client_profile=" . $script . "\n";
-  close CONF;
 
   $cmd = "touch __can_test_failure__";
   system($cmd);
@@ -144,7 +152,7 @@ foreach $script (@script_list) {
   }
 
   $cmd = "java -Xmx2g -Xms2g -Dnet.spy.log.LoggerImpl=net.spy.memcached.compat.log.Log4JLogger" .
-         " -classpath $cls_path:. acp -config tmp-config.txt";
+         " -classpath $cls_path:. acp -config $configfile";
   printf "RUN COMMAND=%s\n", $cmd;
 
   local $SIG{TERM} = sub { print "TERM SIGNAL\n" };
