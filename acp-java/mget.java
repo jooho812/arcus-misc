@@ -55,7 +55,7 @@ public class mget implements client_profile {
       return false;
     BulkFuture<Map<String, byte[]>> f =
       cli.next_ac.asyncGetBulk(keys, raw_transcoder.raw_tc);
-    Map<String, byte[]> val = f.get(1000L, TimeUnit.MILLISECONDS);
+    Map<String, byte[]> val = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
     boolean ok = true;
     if (val == null || val.size() != keys_size) {
       System.out.printf("GetBulk failed. id=%d\n", cli.id);

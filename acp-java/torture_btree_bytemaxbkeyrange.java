@@ -58,7 +58,7 @@ public class torture_btree_bytemaxbkeyrange implements client_profile {
                                new Long(10000),
                                CollectionOverflowAction.smallest_trim);
     CollectionFuture<Boolean> fb = cli.next_ac.asyncBopCreate(key, vtype, attr);
-    boolean ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+    boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
     if (!ok) {
       System.out.printf("bop create failed. id=%d key=%s\n", cli.id, key);
     }
@@ -73,7 +73,7 @@ public class torture_btree_bytemaxbkeyrange implements client_profile {
     String range = String.format("%d", 4000); // FIXME
     attr.setMaxBkeyRangeByBytes(range.getBytes());
     fb = cli.next_ac.asyncSetAttr(key, attr);
-    ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+    ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
     if (!ok) {
       System.out.printf("setattr failed. id=%d key=%s\n", cli.id, key);
     }
@@ -93,7 +93,7 @@ public class torture_btree_bytemaxbkeyrange implements client_profile {
       fb = cli.next_ac.asyncBopInsert(key, bkey_val, bkey_val /* eflag */,
                                       val,
                                       null /* Do not auto-create item */);
-      ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+      ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       if (!ok) {
         System.out.printf("bop insert failed. id=%d key=%s bkey=%d\n", cli.id,
                           key, bkey);

@@ -49,7 +49,7 @@ public class torture_btree_exptime implements client_profile {
       new CollectionAttributes(1000, new Long(10),
                                CollectionOverflowAction.smallest_trim);
     CollectionFuture<Boolean> fb = cli.next_ac.asyncBopCreate(key, vtype, attr);
-    boolean ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+    boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
     if (!ok) {
       System.out.printf("bop create failed. id=%d key=%s: %s\n", cli.id,
                         key, fb.getOperationStatus().getResponse());
@@ -66,7 +66,7 @@ public class torture_btree_exptime implements client_profile {
       fb = cli.next_ac.asyncBopInsert(key, bkey, null /* eflag */,
                                       val,
                                       null /* Do not auto-create item */);
-      ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+      ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       if (!ok) {
         System.out.printf("bop insert failed. id=%d key=%s bkey=%d: %s\n",
                           cli.id, key, bkey,
@@ -87,7 +87,7 @@ public class torture_btree_exptime implements client_profile {
       return false;
     CollectionFuture<CollectionAttributes> f = cli.next_ac.asyncGetAttr(key);
     CollectionAttributes attr = null;
-    attr = f.get(1000L, TimeUnit.MILLISECONDS);
+    attr = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
     if (!cli.after_request(true))
       return false;
     if (attr == null) {
@@ -103,7 +103,7 @@ public class torture_btree_exptime implements client_profile {
                                attr.getOverflowAction());
     CollectionFuture<Boolean> fb = cli.next_ac.asyncSetAttr(key, new_attr);
     boolean ok = false;
-    ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+    ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
     if (!ok) {
       System.out.printf("setattr failed. id=%d key=%s: %s\n", cli.id,
                         key, fb.getOperationStatus().getResponse());

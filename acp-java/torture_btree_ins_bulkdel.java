@@ -60,7 +60,7 @@ public class torture_btree_ins_bulkdel implements client_profile {
                                new Long(cli.conf.ins_element_size),
                                CollectionOverflowAction.smallest_trim);
     CollectionFuture<Boolean> fb = cli.next_ac.asyncBopCreate(key, vtype, attr);
-    boolean ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+    boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
     if (!ok) {
       System.out.printf("bop create failed. id=%d key=%s: %s\n", cli.id,
                         key, fb.getOperationStatus().getResponse());
@@ -77,7 +77,7 @@ public class torture_btree_ins_bulkdel implements client_profile {
       fb = cli.next_ac.asyncBopInsert(key, bkey, eflag /* eflag */,
                                       val,
                                       null /* Do not auto-create item */);
-      ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+      ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       if (!ok) {
         System.out.printf("bop insert failed. id=%d key=%s bkey=%d: %s\n",
                           cli.id, key, bkey,
@@ -97,7 +97,7 @@ public class torture_btree_ins_bulkdel implements client_profile {
         CollectionFuture<Boolean> f =
           cli.next_ac.asyncBopDelete(key, bkey, bkey_to, filter,
                                      0, false);
-        ok = f.get(5000L, TimeUnit.MILLISECONDS);
+        ok = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
         if (!ok) {
           System.out.printf("Collection_Btree: BopDelete failed." +
                             " id=%d key=%s: %s\n", cli.id, key,

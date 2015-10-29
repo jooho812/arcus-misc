@@ -55,7 +55,7 @@ public class torture_set implements client_profile {
                                new Long(10000),
                                CollectionOverflowAction.error);
     CollectionFuture<Boolean> fb = cli.next_ac.asyncSopCreate(key, vtype, attr);
-    boolean ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+    boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
     if (!ok) {
       System.out.printf("sop create failed. id=%d key=%s: %s\n", cli.id,
                         key, fb.getOperationStatus().getResponse());
@@ -79,7 +79,7 @@ public class torture_set implements client_profile {
       }
       fb = cli.next_ac.asyncSopInsert(key, val,
                                       null /* Do not auto-create item */);
-      ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+      ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       if (!ok) {
         System.out.printf("sop insert failed. id=%d key=%s skey=%d: %s\n",
                           cli.id, key, skey,

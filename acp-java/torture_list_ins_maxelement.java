@@ -55,7 +55,7 @@ public class torture_list_ins_maxelement implements client_profile {
                                new Long(cli.conf.ins_element_size),
                                CollectionOverflowAction.head_trim);
     CollectionFuture<Boolean> fb = cli.next_ac.asyncLopCreate(key, vtype, attr);
-    boolean ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+    boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
     if (!ok) {
       System.out.printf("lop create failed. id=%d key=%s: %s\n", cli.id,
                         key, fb.getOperationStatus().getResponse());
@@ -79,7 +79,7 @@ public class torture_list_ins_maxelement implements client_profile {
       }
       fb = cli.next_ac.asyncLopInsert(key, -1 /* tail */, val,
                                       null /* Do not auto-create item */);
-      ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+      ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       if (!ok) {
         System.out.printf("lop insert failed. id=%d key=%s lkey=%d base=%d: %s\n",
                           cli.id, key, lkey, base,

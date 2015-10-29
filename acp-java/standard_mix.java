@@ -55,7 +55,7 @@ public class standard_mix implements client_profile {
     if (!cli.before_request())
       return false;
     CollectionFuture<CollectionAttributes> f = cli.next_ac.asyncGetAttr(key);
-    CollectionAttributes attr = f.get(1000L, TimeUnit.MILLISECONDS);
+    CollectionAttributes attr = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
     if (!cli.after_request(true))
       return false;
 
@@ -63,7 +63,7 @@ public class standard_mix implements client_profile {
       if (!cli.before_request())
         return false;
       Future<Boolean> fb = cli.next_ac.delete(key);
-      boolean ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+      boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       if (!ok) {
         System.out.printf("KeyValue: delete failed. id=%d key=%s\n",
                           cli.id, key);
@@ -90,7 +90,7 @@ public class standard_mix implements client_profile {
                                CollectionAttributes.DEFAULT_MAXCOUNT,
                                CollectionOverflowAction.smallest_trim);
     CollectionFuture<Boolean> fb = cli.next_ac.asyncBopCreate(key, vtype, attr);
-    boolean ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+    boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
     if (!ok) {
       System.out.printf("bop create failed. id=%d key=%s: %s\n", cli.id,
                         key, fb.getOperationStatus().getResponse());
@@ -109,7 +109,7 @@ public class standard_mix implements client_profile {
       fb = cli.next_ac.asyncBopInsert(key, bkey, null /* eflag */,
                                       val,
                                       null /* Do not auto-create item */);
-      ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+      ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       if (!ok) {
         System.out.printf("bop insert failed. id=%d key=%s bkey=%d: %s\n",
                           cli.id, key, bkey,
@@ -148,7 +148,7 @@ public class standard_mix implements client_profile {
     // For set items, OverflowAction is always "error".
 
     CollectionFuture<Boolean> fb = cli.next_ac.asyncSopCreate(key, vtype, attr);
-    boolean ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+    boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
     if (!ok) {
       System.out.printf("sop create failed. id=%d key=%s: %s\n", cli.id,
                         key, fb.getOperationStatus().getResponse());
@@ -164,7 +164,7 @@ public class standard_mix implements client_profile {
       assert(val.length <= 4096);
       fb = cli.next_ac.asyncSopInsert(key, val,
                                       null /* Do not auto-create item */);
-      ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+      ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       if (!ok) {
         System.out.printf("sop insert failed. id=%d key=%s: %s\n", cli.id,
                           key, fb.getOperationStatus().getResponse());
@@ -198,7 +198,7 @@ public class standard_mix implements client_profile {
                                CollectionOverflowAction.tail_trim);
     // OverflowAction should be error, head_trim, or tail_trim
     CollectionFuture<Boolean> fb = cli.next_ac.asyncLopCreate(key, vtype, attr);
-    boolean ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+    boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
     if (!ok) {
       System.out.printf("lop create failed. id=%d key=%s: %s\n", cli.id,
                         key, fb.getOperationStatus().getResponse());
@@ -214,7 +214,7 @@ public class standard_mix implements client_profile {
       assert(val.length <= 4096);
       fb = cli.next_ac.asyncLopInsert(key, 0 /* head */, val,
                                   null /* Do not auto-create item */);
-      ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+      ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       if (!ok) {
         System.out.printf("lop insert failed. id=%d key=%s: %s\n", cli.id,
                           key, fb.getOperationStatus().getResponse());
@@ -245,7 +245,7 @@ public class standard_mix implements client_profile {
       byte[] val = cli.vset.get_value();
       Future<Boolean> fb = 
         cli.next_ac.set(key, cli.conf.client_exptime, val, raw_transcoder.raw_tc);
-      boolean ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+      boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       if (!ok) {
         System.out.printf("set failed. id=%d key=%s\n", cli.id, key);
       }

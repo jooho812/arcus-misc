@@ -29,6 +29,7 @@ public class config {
   public String single_server = null;
   public int client = 10;
   public int rate = 0;
+  public int base_rate = 0;
   public int irg = 0;  // inter-request gap (msec)
   public int request = 100000;
   public int time = 0; // Run this many seconds.  0=forever
@@ -44,6 +45,7 @@ public class config {
   public int valueset_max_size = 4096;
   public String client_profile = "standard_mix";
   public int client_exptime = 100;
+  public int client_timeout = 1000;
   public int client_mget_keys = 500;
   public int ins_element_size = 50000;
   public int act_element_size = 10000;
@@ -123,6 +125,7 @@ public class config {
     }
     else if (key.equals("rate")) {
       rate = Integer.parseInt(val);
+      base_rate = rate;
     }
     else if (key.equals("irg")) {
       irg = Integer.parseInt(val);
@@ -165,6 +168,9 @@ public class config {
     }
     else if (key.equals("client_exptime")) {
       client_exptime = Integer.parseInt(val);
+    }
+    else if (key.equals("client_timeout")) {
+      client_timeout = Integer.parseInt(val);
     }
     else if (key.equals("client_mget_keys")) {
       client_mget_keys = Integer.parseInt(val);

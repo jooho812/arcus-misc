@@ -40,7 +40,7 @@ public class get implements client_profile {
       return false;
     String key = cli.ks.get_key();
     Future<byte[]> f = cli.next_ac.asyncGet(key, raw_transcoder.raw_tc);
-    byte[] val = f.get(1000L, TimeUnit.MILLISECONDS);
+    byte[] val = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
     boolean ok = true;
     if (val == null) {
       System.out.printf("get failed. id=%d\n", cli.id);

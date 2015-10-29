@@ -45,7 +45,7 @@ public class torture_cas implements client_profile {
     byte[] val = cli.vset.get_value();
     Future<Boolean> fb = 
       cli.next_ac.set(key, cli.conf.client_exptime, val, raw_transcoder.raw_tc);
-    boolean ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+    boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
     if (!ok) {
       System.out.printf("set failed. id=%d key=%s\n", cli.id, key);
     }
@@ -55,7 +55,7 @@ public class torture_cas implements client_profile {
     // Gets
     Future<CASValue<byte[]>> fcv = 
       cli.next_ac.asyncGets(key, raw_transcoder.raw_tc);
-    CASValue<byte[]> casv = fcv.get(1000L, TimeUnit.MILLISECONDS);
+    CASValue<byte[]> casv = fcv.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
     ok = (casv != null);
     if (!ok) {
       System.out.printf("gets failed. id=%d key=%s\n", cli.id, key);
@@ -73,7 +73,7 @@ public class torture_cas implements client_profile {
     val = cli.vset.get_value();
     Future<CASResponse> fcr = 
       cli.next_ac.asyncCAS(key, cas_num+1, val, raw_transcoder.raw_tc);
-    CASResponse casr = fcr.get(1000L, TimeUnit.MILLISECONDS);
+    CASResponse casr = fcr.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
     ok = (casr != CASResponse.OK);
     if (!cli.after_request(ok))
       return false;
@@ -85,7 +85,7 @@ public class torture_cas implements client_profile {
 
     // CAS.  Use cas_num.  This time, CAS should succeed.
     fcr = cli.next_ac.asyncCAS(key, cas_num, val, raw_transcoder.raw_tc);
-    casr = fcr.get(1000L, TimeUnit.MILLISECONDS);
+    casr = fcr.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
     ok = (casr == CASResponse.OK);
     if (!cli.after_request(ok))
       return false;

@@ -63,7 +63,7 @@ public class torture_btree_ins_getwithdelete implements client_profile {
                                new Long(cli.conf.ins_element_size),
                                CollectionOverflowAction.smallest_trim);
     CollectionFuture<Boolean> fb = cli.next_ac.asyncBopCreate(key, vtype, attr);
-    boolean ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+    boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
     if (!ok) {
       System.out.printf("bop create failed. id=%d key=%s: %s\n", cli.id,
                         key, fb.getOperationStatus().getResponse());
@@ -80,7 +80,7 @@ public class torture_btree_ins_getwithdelete implements client_profile {
       fb = cli.next_ac.asyncBopInsert(key, bkey, eflag /* eflag */,
                                       val,
                                       null /* Do not auto-create item */);
-      ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+      ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       if (!ok) {
         System.out.printf("bop insert failed. id=%d key=%s bkey=%d: %s\n",
                           cli.id, key, bkey,
@@ -101,7 +101,7 @@ public class torture_btree_ins_getwithdelete implements client_profile {
           cli.next_ac.asyncBopGet(key, bkey, bkey_to, filter,
                                   0, cli.conf.act_element_size, true, true);
         Map<Long, Element<Object>> val =
-          f.get(5000L, TimeUnit.MILLISECONDS);
+          f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
         if (val == null || val.size() <= 0) {
           System.out.printf("Collection_Btree: BopGet failed." +
                             " id=%d key=%s val.size=%d\n", cli.id,

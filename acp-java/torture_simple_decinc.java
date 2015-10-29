@@ -43,7 +43,7 @@ public class torture_simple_decinc implements client_profile {
     byte[] val = str.getBytes();
     Future<Boolean> fb = 
       cli.next_ac.set(key, cli.conf.client_exptime, val, raw_transcoder.raw_tc);
-    boolean ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+    boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
     if (!ok) {
       System.out.printf("set failed. id=%d key=%s\n", cli.id, key);
     }
@@ -54,7 +54,7 @@ public class torture_simple_decinc implements client_profile {
     if (!cli.before_request())
       return false;
     Future<Long> fl = cli.next_ac.asyncDecr(key, cli.id+1);
-    Long lv = fl.get(1000L, TimeUnit.MILLISECONDS);
+    Long lv = fl.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
     // The returned value is the result of decrement.
     ok = true;
     if (lv.longValue() != 0) {
@@ -69,7 +69,7 @@ public class torture_simple_decinc implements client_profile {
     if (!cli.before_request())
       return false;
     fl = cli.next_ac.asyncIncr(key, cli.id+2);
-    lv = fl.get(1000L, TimeUnit.MILLISECONDS);
+    lv = fl.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
     // The returned value is the result of decrement.
     ok = true;
     if (lv.longValue() != cli.id+2) {
@@ -85,7 +85,7 @@ public class torture_simple_decinc implements client_profile {
       return false;
     val = cli.vset.get_value();
     fb = cli.next_ac.replace(key, cli.conf.client_exptime, val, raw_transcoder.raw_tc);
-    ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+    ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
     if (!ok) {
       System.out.printf("replace failed. id=%d key=%s\n", cli.id, key);
     }

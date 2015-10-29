@@ -136,7 +136,7 @@ public class torture_arcus_integration implements client_profile {
       if (!cli.before_request())
         return false;
       Future<Boolean> fb = cli.next_ac.set(key, ExpireTime, workloads);
-      boolean ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+      boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       if (!ok) {
         System.out.printf("KeyValue: set failed. id=%d key=%s\n", cli.id, key);
       }
@@ -149,7 +149,7 @@ public class torture_arcus_integration implements client_profile {
       if (!cli.before_request())
         return false;
       Future<Object> fs = cli.next_ac.asyncGet(key);
-      String s = (String)fs.get(1000L, TimeUnit.MILLISECONDS);
+      String s = (String)fs.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       boolean ok = true;
       if (s == null) {
         ok = false;
@@ -164,7 +164,7 @@ public class torture_arcus_integration implements client_profile {
       if (!cli.before_request())
         return false;
       Future<Boolean> f = cli.next_ac.delete(key);
-      boolean ok = f.get(1000L, TimeUnit.MILLISECONDS);
+      boolean ok = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       if (!ok) {
         System.out.printf("KeyValue: delete failed. id=%d key=%s\n", 
                           cli.id, key);
@@ -178,7 +178,7 @@ public class torture_arcus_integration implements client_profile {
       if (!cli.before_request())
         return false;
       Future<Boolean> fb = cli.next_ac.set(key + "numeric", ExpireTime, "1");
-      boolean ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+      boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       if (!ok) {
         System.out.printf("KeyValue: set numeric failed. id=%d key=%s\n",
                           cli.id, key);
@@ -188,7 +188,7 @@ public class torture_arcus_integration implements client_profile {
       if (!cli.before_request())
         return false;
       Future<Long> fl = cli.next_ac.asyncIncr(key + "numeric", 1);
-      Long lv = fl.get(1000L, TimeUnit.MILLISECONDS);
+      Long lv = fl.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       // The returned value is the result of increment.
       ok = true;
       if (lv.longValue() != 2) {
@@ -206,7 +206,7 @@ public class torture_arcus_integration implements client_profile {
       if (!cli.before_request())
         return false;
       Future<Boolean> fb = cli.next_ac.set(key + "numeric", ExpireTime, "1");
-      boolean ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+      boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       if (!ok) {
         System.out.printf("KeyValue: set numeric failed. id=%d key=%s\n",
                           cli.id, key);
@@ -216,7 +216,7 @@ public class torture_arcus_integration implements client_profile {
       if (!cli.before_request())
         return false;
       Future<Long> fl = cli.next_ac.asyncDecr(key + "numeric", 1);
-      Long lv = fl.get(1000L, TimeUnit.MILLISECONDS);
+      Long lv = fl.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       // The returned value is the result of decrement.
       ok = true;
       if (lv.longValue() != 0) {
@@ -264,7 +264,7 @@ public class torture_arcus_integration implements client_profile {
         CollectionFuture<Boolean> f = cli.next_ac.
           asyncBopInsert(key_list.get(j), bkey, eflag, 
                          workloads[random.nextInt(workloads.length)], attr);
-        boolean ok = f.get(1000L, TimeUnit.MILLISECONDS);
+        boolean ok = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
         if (!ok) {
           System.out.printf("Collection_Btree: BopInsert failed." +
                             " id=%d key=%s bkey=%d: %s\n", cli.id,
@@ -289,7 +289,7 @@ public class torture_arcus_integration implements client_profile {
         cli.next_ac.asyncBopPipedInsertBulk(key_list.get(0), elements,
                                             new CollectionAttributes());
       Map<Integer, CollectionOperationStatus> status_map = 
-        f.get(1000L, TimeUnit.MILLISECONDS);
+        f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       Iterator<CollectionOperationStatus> status_iter = 
         status_map.values().iterator();
       while (status_iter.hasNext()) {
@@ -319,7 +319,7 @@ public class torture_arcus_integration implements client_profile {
                                 /* random.randint(20, 50) */
                                 false, false);
       Map<ByteArrayBKey, Element<Object>> val = 
-        f.get(1000L, TimeUnit.MILLISECONDS);
+        f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       if (val == null || val.size() <= 0) {
         System.out.printf("Collection_Btree: BopGet failed." +
                           " id=%d key=%s val.size=%d\n", cli.id,
@@ -343,7 +343,7 @@ public class torture_arcus_integration implements client_profile {
                                     random.nextInt(30) + 20
                                     /* random.randint(20, 50) */);
       Map<String, BTreeGetResult<ByteArrayBKey, Object>> val = 
-        f.get(1000L, TimeUnit.MILLISECONDS);
+        f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       if (val == null || val.size() <= 0) {
         System.out.printf("Collection_Btree: BopGetBulk failed." +
                           " id=%d val.size=%d\n", cli.id,
@@ -363,7 +363,7 @@ public class torture_arcus_integration implements client_profile {
       CollectionFuture<Boolean> f = 
         cli.next_ac.asyncBopCreate(key, ElementValueType.STRING, 
                                    new CollectionAttributes());
-      boolean ok = f.get(1000L, TimeUnit.MILLISECONDS);
+      boolean ok = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       if (!ok) {
         System.out.printf("Collection_Btree: BopCreate failed." +
                           " id=%d key=%s: %s\n", cli.id, key,
@@ -386,7 +386,7 @@ public class torture_arcus_integration implements client_profile {
                                          filter, 0, 
                                          random.nextInt(30) + 20
                                          /* random.randint(20, 50) */);
-      List<SMGetElement<Object>> val = f.get(1000L, TimeUnit.MILLISECONDS);
+      List<SMGetElement<Object>> val = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       if (val == null || val.size() <= 0) {
         System.out.printf("Collection_Btree: BopSortMergeGet failed." +
                           " id=%d val.size=%d\n", cli.id,
@@ -412,7 +412,7 @@ public class torture_arcus_integration implements client_profile {
         byte[] bkey = bk.getBytes();
         CollectionFuture<Boolean> f = 
           cli.next_ac.asyncBopUpdate(key0, bkey, bitop, value);
-        boolean ok = f.get(1000L, TimeUnit.MILLISECONDS);
+        boolean ok = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
         if (!ok) {
           System.out.printf("Collection_Btree: BopUpdate failed." +
                             " id=%d key=%s: %s\n", cli.id, key0,
@@ -429,7 +429,7 @@ public class torture_arcus_integration implements client_profile {
         return false;
       attr.setExpireTime(100);
       CollectionFuture<Boolean> f = cli.next_ac.asyncSetAttr(key, attr);
-      boolean ok = f.get(1000L, TimeUnit.MILLISECONDS);
+      boolean ok = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       if (!ok) {
         System.out.printf("Collection_Btree: SetAttr failed." +
                           " id=%d key=%s: %s\n", cli.id, key,
@@ -451,7 +451,7 @@ public class torture_arcus_integration implements client_profile {
         CollectionFuture<Boolean> f = 
           cli.next_ac.asyncBopDelete(key_list.get(j), bkey, bkey_to, filter,
                                      0, false);
-        boolean ok = f.get(1000L, TimeUnit.MILLISECONDS);
+        boolean ok = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
         if (!ok) {
           System.out.printf("Collection_Btree: BopDelete failed." +
                             " id=%d key=%s: %s\n", cli.id, key_list.get(j),
@@ -489,7 +489,7 @@ public class torture_arcus_integration implements client_profile {
           String set_value = workloads[i] + Integer.toString(j);
           CollectionFuture<Boolean> f = 
             cli.next_ac.asyncSopInsert(key_list.get(i), set_value, attr);
-          boolean ok = f.get(1000L, TimeUnit.MILLISECONDS);
+          boolean ok = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
           if (!ok) {
             System.out.printf("Collection_Set: SopInsert failed." +
                               " id=%d key=%s: %s\n", cli.id, key_list.get(i),
@@ -513,7 +513,7 @@ public class torture_arcus_integration implements client_profile {
         cli.next_ac.asyncSopPipedInsertBulk(key, elements, 
                                             new CollectionAttributes());
       Map<Integer, CollectionOperationStatus> status_map = 
-        f.get(1000L, TimeUnit.MILLISECONDS);
+        f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       Iterator<CollectionOperationStatus> status_iter = 
         status_map.values().iterator();
       while (status_iter.hasNext()) {
@@ -536,7 +536,7 @@ public class torture_arcus_integration implements client_profile {
       CollectionFuture<Boolean> f = 
         cli.next_ac.asyncSopCreate(key, ElementValueType.STRING, 
                                    new CollectionAttributes());
-      boolean ok = f.get(1000L, TimeUnit.MILLISECONDS);
+      boolean ok = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       if (!ok) {
         System.out.printf("Collection_Set: SopCreate failed." +
                           " id=%d key=%s: %s\n", cli.id, key,
@@ -557,7 +557,7 @@ public class torture_arcus_integration implements client_profile {
           CollectionFuture<Map<Object, Boolean>> f = 
             cli.next_ac.asyncSopPipedExistBulk(key_list.get(i), list_value);
           Map<Object, Boolean> result_map =
-            f.get(1000L, TimeUnit.MILLISECONDS);
+            f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
           if (result_map == null || result_map.size() != list_value.size()) {
             System.out.printf("Collection_Set: SopPipedExistBulk failed." +
                               " id=%d key=%s result_map.size=%d" +
@@ -579,7 +579,7 @@ public class torture_arcus_integration implements client_profile {
       attr.setExpireTime(100);
       CollectionFuture<Boolean> f =
         cli.next_ac.asyncSetAttr(key_list.get(0), attr);
-      boolean ok = f.get(1000L, TimeUnit.MILLISECONDS);
+      boolean ok = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       if (!ok) {
         System.out.printf("Collection_Set: SetAttr failed." +
                           " id=%d key=%s: %s\n", cli.id, key_list.get(0),
@@ -598,7 +598,7 @@ public class torture_arcus_integration implements client_profile {
           String del_value = workloads[i] + Integer.toString(j);
           CollectionFuture<Boolean> f = 
             cli.next_ac.asyncSopDelete(key_list.get(i), del_value, true);
-          boolean ok = f.get(1000L, TimeUnit.MILLISECONDS);
+          boolean ok = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
           if (!ok) {
             System.out.printf("Collection_Set: SopDelete failed." +
                               " id=%d key=%s: %s\n", cli.id, key_list.get(i),
@@ -638,7 +638,7 @@ public class torture_arcus_integration implements client_profile {
           CollectionFuture<Boolean> f = cli.next_ac
             .asyncLopInsert(key_list.get(i), index, 
                             workloads[random.nextInt(workloads.length)], attr);
-          boolean ok = f.get(1000L, TimeUnit.MILLISECONDS);
+          boolean ok = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
           if (!ok) {
             System.out.printf("Collection_List: LopInsert failed." +
                               " id=%d key=%s: %s\n", cli.id, key_list.get(i),
@@ -662,7 +662,7 @@ public class torture_arcus_integration implements client_profile {
         cli.next_ac.asyncLopPipedInsertBulk(key_list.get(0), -1, elements, 
                                             new CollectionAttributes());
       Map<Integer, CollectionOperationStatus> status_map = 
-        f.get(1000L, TimeUnit.MILLISECONDS);
+        f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       Iterator<CollectionOperationStatus> status_iter = 
         status_map.values().iterator();
       while (status_iter.hasNext()) {
@@ -689,7 +689,7 @@ public class torture_arcus_integration implements client_profile {
         CollectionFuture<List<Object>> f =
           cli.next_ac.asyncLopGet(key_list.get(i), index, index_to, 
                                   false, false);
-        List<Object> val = f.get(1000L, TimeUnit.MILLISECONDS);
+        List<Object> val = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
         if (val == null || val.size() <= 0) {
           System.out.printf("Collection_List: LopGet failed." +
                             " id=%d key=%s val.size=%d\n",
@@ -708,7 +708,7 @@ public class torture_arcus_integration implements client_profile {
       attr.setExpireTime(100);
       CollectionFuture<Boolean> f =
         cli.next_ac.asyncSetAttr(key_list.get(0), attr);
-      boolean ok = f.get(1000L, TimeUnit.MILLISECONDS);
+      boolean ok = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       if (!ok) {
         System.out.printf("Collection_List: SetAttr failed." +
                           " id=%d key=%s: %s\n", cli.id, key_list.get(0),
@@ -727,7 +727,7 @@ public class torture_arcus_integration implements client_profile {
           return false;
         CollectionFuture<Boolean> f = 
           cli.next_ac.asyncLopDelete(key_list.get(i), index, index_to, true);
-        boolean ok = f.get(1000L, TimeUnit.MILLISECONDS);
+        boolean ok = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
         if (!ok) {
           System.out.printf("Collection_List: LopDelete failed." +
                             " id=%d key=%s: %s\n", cli.id, key_list.get(i),

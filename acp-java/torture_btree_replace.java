@@ -54,7 +54,7 @@ public class torture_btree_replace implements client_profile {
                                new Long(4000),
                                CollectionOverflowAction.smallest_trim);
     CollectionFuture<Boolean> fb = cli.next_ac.asyncBopCreate(key, vtype, attr);
-    boolean ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+    boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
     if (!ok) {
       System.out.printf("bop create failed. id=%d key=%s: %s\n", cli.id,
                         key, fb.getOperationStatus().getResponse());
@@ -71,7 +71,7 @@ public class torture_btree_replace implements client_profile {
       fb = cli.next_ac.asyncBopInsert(key, bkey, null /* eflag */,
                                       val,
                                       null /* Do not auto-create item */);
-      ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+      ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       if (!ok) {
         System.out.printf("bop insert failed. id=%d key=%s bkey=%d: %s\n",
                           cli.id, key, bkey,
@@ -88,7 +88,7 @@ public class torture_btree_replace implements client_profile {
       byte[] val = cli.vset.get_value();
       assert(val.length <= 4096);
       fb = cli.next_ac.asyncBopUpdate(key, bkey, null /* eflag */, val);
-      ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+      ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       if (!ok) {
         CollectionResponse res = fb.getOperationStatus().getResponse();
         System.out.printf("bop update failed. id=%d key=%s bkey=%d res=%s\n", 
@@ -105,7 +105,7 @@ public class torture_btree_replace implements client_profile {
       byte[] val = cli.vset.get_value();
       assert(val.length <= 4096);
       fb = cli.next_ac.asyncBopUpsert(key, bkey, null /* eflag */, val, null);
-      ok = fb.get(1000L, TimeUnit.MILLISECONDS);
+      ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       if (!ok) {
         CollectionResponse res = fb.getOperationStatus().getResponse();
         System.out.printf("bop upsert failed. id=%d key=%s bkey=%d res=%s\n",
@@ -126,7 +126,7 @@ public class torture_btree_replace implements client_profile {
       assert(val.length <= 4096);
       CollectionFuture<Long> fl = 
         cli.next_ac.asyncBopIncr(key, bkey, (int)bkey);
-      Long lv = fl.get(1000L, TimeUnit.MILLISECONDS);
+      Long lv = fl.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       //if (!ok) {
       //  System.out.printf("bop incr failed. id=%d key=%s bkey=%d\n", cli.id,
       //                    key, bkey);
@@ -143,7 +143,7 @@ public class torture_btree_replace implements client_profile {
       assert(val.length <= 4096);
       CollectionFuture<Long> fl = 
         cli.next_ac.asyncBopDecr(key, bkey, (int)bkey);
-      Long lv = fl.get(1000L, TimeUnit.MILLISECONDS);
+      Long lv = fl.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
       //if (!ok) {
       //  System.out.printf("bop decr failed. id=%d key=%s bkey=%d\n", cli.id,
       //                    key, bkey);
