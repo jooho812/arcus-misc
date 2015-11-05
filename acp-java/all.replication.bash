@@ -19,6 +19,8 @@ fi
 m_port=11215
 s_port=11216
 
+mv_repl_test_log=1
+
 run_all_kill=1
 run_slave_kill=1
 run_master_kill=1
@@ -51,7 +53,10 @@ then
   echo "perl run_all_repl_test.pl $m_port $s_port all_kill $duration compare" >> all.replication.log
   perl run_all_repl_test.pl $m_port $s_port all_kill $duration compare >& repl_test.log
   grep "Finished" repl_test.log >> all.replication.log
-  mv repl_test.log repl_test.all_kill.$COUNTER.log
+  if [ $mv_repl_test_log -eq 1 ];
+  then
+    mv repl_test.log repl_test.all_kill.$COUNTER.log
+  fi
 fi
 
 # slave_kill
@@ -61,7 +66,10 @@ then
   echo "perl run_all_repl_test.pl $m_port $s_port slave_kill $duration compare" >> all.replication.log
   perl run_all_repl_test.pl $m_port $s_port slave_kill $duration compare >& repl_test.log
   grep "Finished" repl_test.log >> all.replication.log
-  mv repl_test.log repl_test.slave_kill.$COUNTER.log
+  if [ $mv_repl_test_log -eq 1 ];
+  then
+    mv repl_test.log repl_test.slave_kill.$COUNTER.log
+  fi
 fi
 
 # master_kill
@@ -71,7 +79,10 @@ then
   echo "perl run_all_repl_test.pl $m_port $s_port master_kill $duration compare" >> all.replication.log
   perl run_all_repl_test.pl $m_port $s_port master_kill $duration compare >& repl_test.log
   grep "Finished" repl_test.log >> all.replication.log
-  mv repl_test.log repl_test.master_kill.$COUNTER.log
+  if [ $mv_repl_test_log -eq 1 ];
+  then
+    mv repl_test.log repl_test.master_kill.$COUNTER.log
+  fi
 fi
 
 # all_stop
@@ -81,7 +92,10 @@ then
   echo "perl run_all_repl_test.pl $m_port $s_port all_stop $duration compare" >> all.replication.log
   perl run_all_repl_test.pl $m_port $s_port all_stop $duration compare >& repl_test.log
   grep "Finished" repl_test.log >> all.replication.log
-  mv repl_test.log repl_test.all_stop.$COUNTER.log
+  if [ $mv_repl_test_log -eq 1 ];
+  then
+    mv repl_test.log repl_test.all_stop.$COUNTER.log
+  fi
 fi
 
 # slave_stop
@@ -91,7 +105,10 @@ then
   echo "perl run_all_repl_test.pl $m_port $s_port slave_stop $duration compare" >> all.replication.log
   perl run_all_repl_test.pl $m_port $s_port slave_stop $duration compare >& repl_test.log
   grep "Finished" repl_test.log >> all.replication.log
-  mv repl_test.log repl_test.slave_stop.$COUNTER.log
+  if [ $mv_repl_test_log -eq 1 ];
+  then
+    mv repl_test.log repl_test.slave_stop.$COUNTER.log
+  fi
 fi
 
 # master_stop
@@ -101,7 +118,10 @@ then
   echo "perl run_all_repl_test.pl $m_port $s_port master_stop $duration compare" >> all.replication.log
   perl run_all_repl_test.pl $m_port $s_port master_stop $duration compare >& repl_test.log
   grep "Finished" repl_test.log >> all.replication.log
-  mv repl_test.log repl_test.master_stop.$COUNTER.log
+  if [ $mv_repl_test_log -eq 1 ];
+  then
+    mv repl_test.log repl_test.master_stop.$COUNTER.log
+  fi
 fi
 
 # switchover
@@ -111,7 +131,10 @@ then
   echo "perl run_all_repl_test.pl $m_port $s_port switchover $duration compare" >> all.replication.log
   perl run_all_repl_test.pl $m_port $s_port switchover $duration compare >& repl_test.log
   grep "Finished" repl_test.log >> all.replication.log
-  mv repl_test.log repl_test.switchover.$COUNTER.log
+  if [ $mv_repl_test_log -eq 1 ];
+  then
+    mv repl_test.log repl_test.switchover.$COUNTER.log
+  fi
 fi
 
 # none
@@ -121,6 +144,9 @@ then
   echo "perl run_all_repl_test.pl $m_port $s_port none $duration compare" >> all.replication.log
   perl run_all_repl_test.pl $m_port $s_port none $duration compare >& repl_test.log
   grep "Finished" repl_test.log >> all.replication.log
-  mv repl_test.log repl_test.none.$COUNTER.log
+  if [ $mv_repl_test_log -eq 1 ];
+  then
+    mv repl_test.log repl_test.none.$COUNTER.log
+  fi
 fi
 
