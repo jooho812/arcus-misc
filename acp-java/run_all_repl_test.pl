@@ -43,7 +43,7 @@ print "filename = $filename\n";
 print "dir_path = $dir_path\n";
 
 $jar_path = "$dir_path/../../arcus-java-client/target";
-$cls_path = "$jar_path/arcus-java-client-1.8.2.jar" .
+$cls_path = "$jar_path/arcus-java-client-1.9.0.jar" .
     ":$jar_path/zookeeper-3.4.5.jar:$jar_path/log4j-1.2.16.jar" .
     ":$jar_path/slf4j-api-1.6.1.jar:$jar_path/slf4j-log4j12-1.6.1.jar";
 
@@ -68,6 +68,7 @@ print CONF
   "pool=1\n" .
   "pool_size=10\n" .
   "pool_use_random=false\n" .
+  "client_timeout=5000\n" .
   "client_exptime=0\n";
 close CONF;
 
@@ -123,31 +124,31 @@ foreach $configfile (@configfile_list) {
   system($cmd);
 
   if ($failure_type eq "all_kill") {
-    $cmd = "./loop.memcached.bash $m_port $s_port all KILL 10 10 8 &";
+    $cmd = "./loop.memcached.bash $m_port $s_port all KILL 10 10 1000000 &";
     $ret = system($cmd);
   }
   elsif ($failure_type eq "all_stop") {
-    $cmd = "./loop.memcached.bash $m_port $s_port all INT 10 10 8 &";
+    $cmd = "./loop.memcached.bash $m_port $s_port all INT 10 10 1000000 &";
     $ret = system($cmd);
   }
   elsif ($failure_type eq "master_kill") {
-    $cmd = "./loop.memcached.bash $m_port $s_port master KILL 10 10 8 &";
+    $cmd = "./loop.memcached.bash $m_port $s_port master KILL 10 10 1000000 &";
     $ret = system($cmd);
   }
   elsif ($failure_type eq "master_stop") {
-    $cmd = "./loop.memcached.bash $m_port $s_port master INT 10 10 8 &";
+    $cmd = "./loop.memcached.bash $m_port $s_port master INT 10 10 1000000 &";
     $ret = system($cmd);
   }
   elsif ($failure_type eq "slave_kill") {
-    $cmd = "./loop.memcached.bash $m_port $s_port slave KILL 10 10 8 &";
+    $cmd = "./loop.memcached.bash $m_port $s_port slave KILL 10 10 1000000 &";
     $ret = system($cmd);
   }
   elsif ($failure_type eq "slave_stop") {
-    $cmd = "./loop.memcached.bash $m_port $s_port slave INT 10 10 8 &";
+    $cmd = "./loop.memcached.bash $m_port $s_port slave INT 10 10 1000000 &";
     $ret = system($cmd);
   }
   elsif ($failure_type eq "switchover") {
-    $cmd = "./loop.switchover.bash $m_port $s_port 10 10 8 &";
+    $cmd = "./loop.switchover.bash $m_port $s_port 10 10 1000000 &";
     $ret = system($cmd);
   }
 
