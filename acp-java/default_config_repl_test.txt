@@ -12,4 +12,5 @@ pool_size=10
 pool_use_random=false
 key_prefix=simple_getset
 client_exptime=0
+client_timeout=5000
 client_profile=simple_getset
