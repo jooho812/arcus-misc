@@ -195,9 +195,12 @@ class acp {
       // Use ZK
       for (int i = 0; i < conf.pool; i++) {
         System.out.printf("Creating ArcusClientPool. id=%d\n", i);
+        ConnectionFactoryBuilder factory = new ConnectionFactoryBuilder();
+        factory.setOpTimeout(conf.client_timeout);
+
         ArcusClientPool p = 
           ArcusClient.createArcusClientPool(conf.zookeeper, conf.service_code,
-                                            new ConnectionFactoryBuilder(),
+                                            factory,
                                             conf.pool_size);
         pool[i] = p;
       }
