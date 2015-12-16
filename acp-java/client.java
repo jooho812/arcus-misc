@@ -175,7 +175,7 @@ public class client implements Runnable {
     else
       stat_requests_error++;
 
-    if (rem_requests == -1)
+    if ((rem_requests == -1) || stop)
       return false; // Stop the test
     return true;
   }
