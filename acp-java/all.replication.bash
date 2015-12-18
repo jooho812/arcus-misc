@@ -29,6 +29,7 @@ run_slave_stop=1
 run_master_stop=1
 run_switchover=1
 run_none=1
+run_client=0
 
 all_test=1
 
@@ -42,9 +43,23 @@ run_slave_stop=0
 run_master_stop=0
 run_switchover=0
 run_none=1
+run_client=0
 fi
 
 rm -f repl_test.*.$COUNTER.log
+
+# client
+if [ $run_client -eq 1 ];
+then
+  echo `date` >> all.replication.log
+  echo "perl run_client_repl_test.pl $m_port $s_port client $duration compare" >> all.replication.log
+  perl run_client_repl_test.pl $m_port $s_port client $duration compare >& repl_test.log
+  grep "Finished" repl_test.log >> all.replication.log
+  if [ $cp_repl_test_log -eq 1 ];
+  then
+    cp repl_test.log repl_test.client.$COUNTER.log
+  fi
+fi
 
 # all_kill
 if [ $run_all_kill -eq 1 ];

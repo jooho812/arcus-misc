@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import java.io.File;
 import java.util.Vector;
 
 import net.spy.memcached.ArcusClient;
@@ -187,10 +188,19 @@ public class client implements Runnable {
     System.out.printf("Client is running. id=%d\n", id);    
     while (!stop) { 
       /* Keep running */   
-      boolean do_another = profile.do_test(this);
-      if (!do_another) {
-        stop = true;
-        continue;
+      File checkFile = new File("op_ignore");
+      if (checkFile.exists()) {
+        try {
+	  Thread.sleep(50);
+	} catch (InterruptedException e) {
+	  e.printStackTrace();
+	}
+      } else {
+        boolean do_another = profile.do_test(this);
+        if (!do_another) {
+          stop = true;
+          continue;
+        }
       }
     }
     System.out.printf("Client stopped. id=%d\n", id);
