@@ -21,72 +21,50 @@ import java.util.Random;
 
 public class simple_decr implements client_profile {
 
-  String DEFAULT_PREFIX = "arcustest-";
-  int KeyLen = 20;
-  char[] dummystring = 
-    ("1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
-     "abcdefghijlmnopqrstuvwxyz").toCharArray();
-  Random random = new Random(); // repeatable is okay
-
-  String gen_key(String name) {
-    if (name == null)
-	  name = "unknown";
-      String prefix = DEFAULT_PREFIX;
-	  String key = generateData(KeyLen);
-	  return prefix + name + ":" + key;
-  }
-
-  String generateData(int length) {
-    String ret = "";
-	for (int loop = 0; loop < length; loop++) {
-	  int randomInt = random.nextInt(60);
-	  char tempchar = dummystring[randomInt];
-	  ret = ret + tempchar;
-	}
-	return ret;
-  }
-
   public boolean do_test(client cli) {
     try {
       if (!do_simple_test(cli))
-	    return false;
-	} catch (Exception e) {
-	  cli.after_request(false);
-	}
-	return true;
+        return false;
+    } catch (Exception e) {
+      System.out.printf("client_profile exception. id=%d exception=%s\n",
+                        cli.id, e.toString());
+      e.printStackTrace();
+    }
+    return true;
   }
 
   public boolean do_simple_test(client cli) throws Exception {
-	int by = 1;
+    int by = 1;
+
     if (!cli.before_request())
-	  return false;
+      return false;
 
-	String key = gen_key("Collection_Simple");
-	String val = "10000";
+    String key = cli.ks.get_key();
+    String val = "10000";
 
-	// SET
-	Future<Boolean> fb = 
-	  cli.next_ac.set(key, cli.conf.client_exptime, val);
-	boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
-	if (!cli.after_request(ok))
-	  return false;
+    // SET
+    Future<Boolean> fb =
+      cli.next_ac.set(key, cli.conf.client_exptime, val);
+    boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
 
-	// Decr 100 times.
-	for (int i = 0; i < 100; i++) {
+    if (!cli.after_request(ok))
+      return false;
+
+    // Decr 100 times.
+    for (int i = 0; i < 100; i++) {
       if (!cli.before_request())
         return false;
 
-	  long result = 0L;
-	  result = cli.next_ac.decr(key, by);
-	  System.out.printf("result : %ld\n", result);
-	  if (result == 0L) {
+      long result = 0L;
+      result = cli.next_ac.decr(key, by);
+      //System.out.printf("result : %ld\n", result);
+      if (result == 0L) {
         System.out.printf("key-value Decr failed. id=%d\n", cli.id);
-	  }
-	  if (!cli.after_request(true))
-	    return false;
-	}
+      }
+      if (!cli.after_request(true))
+        return false;
+    }
 
-	return true;
+    return true;
   }
-
 }

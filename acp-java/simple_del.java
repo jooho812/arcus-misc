@@ -21,44 +21,40 @@ import java.util.Random;
 
 public class simple_del implements client_profile {
 
-  String DEFAULT_PREFIX = "arcustest-";
-  int KeyLen = 20;
-  char[] dummystring = 
-    ("1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
-     "abcdefghijlmnopqrstuvwxyz").toCharArray();
-  Random random = new Random(); // repeatable is okay
-
   public boolean do_test(client cli) {
     try {
       if (!do_simple_test(cli))
-		return false;
-	} catch (Exception e) {
-      cli.after_request(false);
-	}
-	return true;
+        return false;
+    } catch (Exception e) {
+      System.out.printf("client_profile exception. id=%d exception=%s\n",
+                        cli.id, e.toString());
+      e.printStackTrace();
+    }
+    return true;
   }
 
   public boolean do_simple_test(client cli) throws Exception {
 
-	String key = cli.ks.get_key();
-	byte[] val = cli.vset.get_value();
+    String key = cli.ks.get_key();
+    byte[] val = cli.vset.get_value();
 
-	// SET
-	Future<Boolean> fb = 
-	  cli.next_ac.set(key, cli.conf.client_exptime, val);
-	boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
-	if (!cli.after_request(ok))
-	  return false;
+    // SET
+    if (!cli.before_request())
+      return false;
+    Future<Boolean> fb =
+      cli.next_ac.set(key, cli.conf.client_exptime, val);
+    boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+    if (!cli.after_request(ok))
+      return false;
 
-	// DELETE
-	fb = cli.next_ac.delete(key);
-	ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
-	if (!cli.after_request(ok))
-	  return false;
+    // DELETE
+    if (!cli.before_request())
+      return false;
+    fb = cli.next_ac.delete(key);
+    ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+    if (!cli.after_request(ok))
+      return false;
 
-
-	return true;
-
+    return true;
   }
-
 }

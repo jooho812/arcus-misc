@@ -23,52 +23,53 @@ public class simple_append implements client_profile {
     try {
       if (!do_simple_test(cli))
         return false;
-	} catch (Exception e) {
-      cli.after_request(false);
-	}
-	return true;
+    } catch (Exception e) {
+      System.out.printf("client_profile exception. id=%d exception=%s\n",
+                        cli.id, e.toString());
+      e.printStackTrace();
+    }
+    return true;
   }
 
   public boolean do_simple_test(client cli) throws Exception {
+    long not_used = 1000L;
 
-	long not_used = 1000L;
+    if (!cli.before_request())
+      return false;
 
-	if (!cli.before_request())
-	  return false;
+    // Pick a key
+    String key = cli.ks.get_key();
+    byte[] val = cli.vset.get_value();
 
-	// Pick a key
-	String key = cli.ks.get_key();
-	byte[] val = cli.vset.get_value();
-
-	// ADD
-	if (!cli.before_request())
-	  return false;
-	Future<Boolean> f = cli.next_ac.add(key, cli.conf.client_exptime, val);
-	boolean ok = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
-	if (!ok) {
+    // ADD
+    if (!cli.before_request())
+      return false;
+    Future<Boolean> f = cli.next_ac.add(key, cli.conf.client_exptime, val);
+    boolean ok = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+    if (!ok) {
       System.out.printf("add failed. id=%d key=%s\n", cli.id, key);
-	}
+    }
     if (!cli.after_request(ok))
-	  return false;
+      return false;
+    if (!ok)
+      return true;
 	
-	// Append 100 times.
-	for (int i = 0; i < 100; i++) {
+    // Append 100 times.
+    for (int i = 0; i < 100; i++) {
       if (!cli.before_request())
-	    return false;
+        return false;
 
-	  Future<Boolean> fb = cli.next_ac.append(not_used, key, val);
-	  ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
-	  if (!ok) {
+      Future<Boolean> fb = cli.next_ac.append(not_used, key, val);
+      ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+      if (!ok) {
         System.out.printf("append failed. id=%d key=%s\n", cli.id, key);
-	  }
-	  if (!cli.after_request(ok))
-	    return false;
-	}
+      }
+      if (!cli.after_request(ok))
+        return false;
+      if (!ok)
+        return true;
+    }
 
-	return true;
-
-
+    return true;
   }
-
-
 }

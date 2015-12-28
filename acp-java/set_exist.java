@@ -27,77 +27,72 @@ import net.spy.memcached.internal.CollectionFuture;
 
 public class set_exist implements client_profile {
 
-  String DEFAULT_PREFIX = "arcustest-";
-  int KeyLen = 20;
-  char[] dummystring = 
-    ("1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
-     "abcdefghijlmnopqrstuvwxyz").toCharArray();
-  Random random = new Random(); // repeatable is okay
-
   public boolean do_test(client cli) {
     try {
-	  if (!do_set_test(cli))
-        return false; 
-	} catch (Exception e) {
+      if (!do_set_test(cli))
+        return false;
+    } catch (Exception e) {
       System.out.printf("client_profile exception. id=%d exception=%s\n",
-					    cli.id, e.toString());
-	  e.printStackTrace();
-	}
-	return true;
+                        cli.id, e.toString());
+      e.printStackTrace();
+    }
+    return true;
   }
 
   public boolean do_set_test(client cli) throws Exception {
-
     // Pick a key
-	String key = cli.ks.get_key();
-	byte[] val = cli.vset.get_value();
-	assert(val.length <= 4096);
+    String key = cli.ks.get_key();
+    byte[] val = cli.vset.get_value();
+    assert(val.length <= 4096);
 
-	// Set Create
-	if (!cli.before_request())
-	  return false;
-	ElementValueType vtype = ElementValueType.BYTEARRAY;
-	CollectionAttributes attr = 
-	  new CollectionAttributes(cli.conf.client_exptime,
-					           CollectionAttributes.DEFAULT_MAXCOUNT,
-							   CollectionOverflowAction.error);
+    // Set Create
+    if (!cli.before_request())
+      return false;
+    ElementValueType vtype = ElementValueType.BYTEARRAY;
+    CollectionAttributes attr =
+      new CollectionAttributes(cli.conf.client_exptime,
+                               CollectionAttributes.DEFAULT_MAXCOUNT,
+                               CollectionOverflowAction.error);
 
-	CollectionFuture<Boolean> fb = cli.next_ac.asyncSopCreate(key, vtype, attr); 
-	boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
-	if (!ok) {
+    CollectionFuture<Boolean> fb = cli.next_ac.asyncSopCreate(key, vtype, attr);
+    boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+    if (!ok) {
       System.out.printf("sop create failed. id=%d key=%s: %s\n", cli.id,
                         key, fb.getOperationStatus().getResponse());
-	}
-	if (!cli.after_request(ok))
-	  return false;
+    }
+    if (!cli.after_request(ok))
+      return false;
+    if (!ok)
+      return true;
 
-	// Insert 1 element.
-	if (!cli.before_request())
-	  return false;
+    // Insert 1 element.
+    if (!cli.before_request())
+      return false;
 
-	fb = cli.next_ac.asyncSopInsert(key, val, null /* Do not auto-create item */);
-	ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
-	if (!ok) {
+    fb = cli.next_ac.asyncSopInsert(key, val, null /* Do not auto-create item */);
+    ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+    if (!ok) {
       System.out.printf("sop insert failed. id=%d key=%s: %s\n", cli.id,
                         key, fb.getOperationStatus().getResponse());
-	}
-	if (!cli.after_request(ok))
-	  return false;
+    }
+    if (!cli.after_request(ok))
+      return false;
+    if (!ok)
+      return true;
 
-	// Set Exist
-	if (!cli.before_request())
-	  return false;
+    // Set Exist
+    if (!cli.before_request())
+      return false;
 
-	fb = cli.next_ac.asyncSopExist(key, val);
-	ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
-	if (!ok) {
+    fb = cli.next_ac.asyncSopExist(key, val);
+    ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+    if (!ok) {
       System.out.printf("sop exist check failed. id=%d key=%s: %s\n", cli.id,
-					    key, fb.getOperationStatus().getResponse());
-	}
-	if (!cli.after_request(ok))
-	  return false;
+                        key, fb.getOperationStatus().getResponse());
+    }
+    if (!cli.after_request(ok))
+      return false;
 
-	return true;
+    return true;
   }
-
 }

@@ -25,6 +25,8 @@ import net.spy.memcached.ArcusClient;
 import net.spy.memcached.ArcusClientPool;
 import net.spy.memcached.ConnectionFactoryBuilder;
 import net.spy.memcached.DefaultConnectionFactory;
+import net.spy.memcached.DefaultConnectionFactory;
+import net.spy.memcached.FailureMode;
 
 class acp {
   config conf;
@@ -155,6 +157,62 @@ class acp {
     }
     else if (conf.client_profile.equals("torture_arcus_integration")) {
       profile = new torture_arcus_integration();
+    }
+    else if (conf.client_profile.equals("list_bulk_ins")) {
+      profile = new list_bulk_ins();
+    }
+    else if (conf.client_profile.equals("list_bulk_piped_ins")) {
+      profile = new list_bulk_piped_ins();
+    }
+    else if (conf.client_profile.equals("set_bulk_ins")) {
+      profile = new set_bulk_ins();
+    }
+    else if (conf.client_profile.equals("set_bulk_piped_ins")) {
+      profile = new set_bulk_piped_ins();
+    }
+/*
+    else if (conf.client_profile.equals("btree_bulk_piped_ins")) {
+      profile = new btree_bulk_piped_ins();
+    }
+*/
+    else if (conf.client_profile.equals("simple_add")) {
+      profile = new simple_add();
+    }
+    else if (conf.client_profile.equals("simple_append")) {
+      profile = new simple_add();
+    }
+    else if (conf.client_profile.equals("simple_prepend")) {
+      profile = new simple_add();
+    }
+    else if (conf.client_profile.equals("simple_set_bulk")) {
+      profile = new simple_set_bulk();
+    }
+    else if (conf.client_profile.equals("simple_get_bulk")) {
+      profile = new simple_get_bulk();
+    }
+    else if (conf.client_profile.equals("simple_async_get_bulk")) {
+      profile = new simple_async_get_bulk();
+    }
+    else if (conf.client_profile.equals("simple_incr")) {
+      profile = new simple_incr();
+    }
+    else if (conf.client_profile.equals("simple_decr")) {
+      profile = new simple_decr();
+    }
+    else if (conf.client_profile.equals("set_exist")) {
+      profile = new set_exist();
+    }
+    else if (conf.client_profile.equals("simple_cas")) {
+      profile = new simple_cas();
+    }
+    else if (conf.client_profile.equals("simple_del")) {
+      profile = new simple_del();
+    }
+    else if (conf.client_profile.equals("simple_async_incr")) {
+      profile = new simple_async_incr();
+    }
+    else if (conf.client_profile.equals("simple_async_decr")) {
+      profile = new simple_async_decr();
     }
     if (profile == null) {
       System.out.println("Cannot find client profile=" + conf.client_profile);

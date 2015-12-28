@@ -21,55 +21,52 @@ import java.util.Random;
 
 public class simple_async_decr implements client_profile {
 
-  String DEFAULT_PREFIX = "arcustest-";
-  int KeyLen = 20;
-  char[] dummystring = 
-    ("1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
-     "abcdefghijlmnopqrstuvwxyz").toCharArray();
-  Random random = new Random(); // repeatable is okay
-
   public boolean do_test(client cli) {
     try {
       if (!do_simple_test(cli))
-	    return false;
-	} catch (Exception e) {
-	  cli.after_request(false);
-	}
-	return true;
+        return false;
+    } catch (Exception e) {
+      System.out.printf("client_profile exception. id=%d exception=%s\n",
+                        cli.id, e.toString());
+      e.printStackTrace();
+    }
+    return true;
   }
 
   public boolean do_simple_test(client cli) throws Exception {
-   
-	int by = 1;
+    int by = 1;
 
     if (!cli.before_request())
-	  return false;
+      return false;
 
-	String key = cli.ks.get_key();
-	String val = "10000";
+    String key = cli.ks.get_key();
+    String val = "10000";
 
-	// SET
-	Future<Boolean> fb = 
-	  cli.next_ac.set(key, cli.conf.client_exptime, val);
-	boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
-	if (!cli.after_request(ok))
-	  return false;
+    // SET
+    Future<Boolean> fb =
+      cli.next_ac.set(key, cli.conf.client_exptime, val);
+    boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+    if (!cli.after_request(ok))
+      return false;
+    if (!ok)
+      return true;
 
-	// Decr 100 times.
-	for (int i = 0; i < 100; i++) {
+    // Decr 100 times.
+    for (int i = 0; i < 100; i++) {
       if (!cli.before_request())
         return false;
 
-	  Future<Long> f = cli.next_ac.asyncDecr(key, by);
-	  Long result = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
-	  if (result == null) {
+      Future<Long> f = cli.next_ac.asyncDecr(key, by);
+      Long result = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+      if (result == null) {
         System.out.printf("key-value Decr failed. id=%d\n", cli.id);
-	  }
-	  if (!cli.after_request(true))
-	    return false;
-	}
+      }
+      if (!cli.after_request(true))
+        return false;
+      if (result == null)
+        return true;
+    }
 
-	return true;
+    return true;
   }
-
 }

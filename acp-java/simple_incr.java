@@ -21,56 +21,51 @@ import java.util.Random;
 
 public class simple_incr implements client_profile {
 
-  String DEFAULT_PREFIX = "arcustest-";
-  int KeyLen = 20;
-  char[] dummystring = 
-    ("1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
-     "abcdefghijlmnopqrstuvwxyz").toCharArray();
-  Random random = new Random(); // repeatable is okay
-
   public boolean do_test(client cli) {
     try {
       if (!do_simple_test(cli))
-	    return false;
-	} catch (Exception e) {
-      cli.after_request(false);
-	}
-	return true;
+        return false;
+    } catch (Exception e) {
+      System.out.printf("client_profile exception. id=%d exception=%s\n",
+                        cli.id, e.toString());
+      e.printStackTrace();
+    }
+    return true;
   }
 
   public boolean do_simple_test(client cli) throws Exception {
-	int by = 1;
-	if (!cli.before_request())
-	  return false;
+    int by = 1;
 
-	String key = cli.ks.get_key();
-	String val = "10000";
+    if (!cli.before_request())
+      return false;
+
+    String key = cli.ks.get_key();
+    String val = "10000";
 
     // SET
-	Future<Boolean> fb = 
-	  cli.next_ac.set(key, cli.conf.client_exptime, val);
-	boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
-	if (!cli.after_request(ok))
-	  return false;
+    Future<Boolean> fb =
+      cli.next_ac.set(key, cli.conf.client_exptime, val);
+    boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
 
-	// Incr 100 times.
-	for (int i = 0; i < 100; i++) {
+    if (!cli.after_request(ok))
+      return false;
+
+    // Incr 100 times.
+    for (int i = 0; i < 100; i++) {
       if (!cli.before_request())
-	    return false;
+        return false;
 
-	  long result = 0L;
-	  result = cli.next_ac.incr(key, by);
+      long result = 0L;
+      result = cli.next_ac.incr(key, by);
 
-	  System.out.printf("result : %ld\n", result);
-	  if (result == 0L) {
+      //System.out.printf("result : %ld\n", result);
+      if (result == 0L) {
         System.out.printf("key-value Incr failed. id=%d\n", cli.id);
-	  }
+      }
       if (!cli.after_request(true))
-	    return false;
-	}
+        return false;
+    }
 
     return true;
-
   }
-
 }

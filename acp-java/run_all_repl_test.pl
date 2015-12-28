@@ -103,6 +103,23 @@ system($cmd);
   , "config-repl-torture_set_ins_getwithdelete.txt"
   , "config-repl-simple_set_1mb.txt"
   , "config-repl-torture_btree_ins_maxelement.txt"
+  , "config-repl-list_bulk_ins.txt"
+  , "config-repl-list_bulk_piped_ins.txt"
+  , "config-repl-set_bulk_ins.txt"
+  , "config-repl-set_bulk_piped_ins.txt"
+  , "config-repl-simple_add.txt"
+  , "config-repl-simple_append.txt"
+  , "config-repl-simple_prepend.txt"
+  , "config-repl-simple_set_bulk.txt"
+  , "config-repl-simple_get_bulk.txt"
+  , "config-repl-simple_async_get_bulk.txt"
+  , "config-repl-simple_incr.txt"
+  , "config-repl-simple_decr.txt"
+  , "config-repl-set_exist.txt"
+  , "config-repl-simple_cas.txt"
+  , "config-repl-simple_del.txt"
+  , "config-repl-simple_async_incr.txt"
+  , "config-repl-simple_async_decr.txt"
 );
 
 #$cmd = "rm -f __can_test_failure__";
