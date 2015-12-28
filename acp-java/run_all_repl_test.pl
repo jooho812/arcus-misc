@@ -43,7 +43,7 @@ print "filename = $filename\n";
 print "dir_path = $dir_path\n";
 
 $jar_path = "$dir_path/../../arcus-java-client/target";
-$cls_path = "$jar_path/arcus-java-client-1.9.0.jar" .
+$cls_path = "$jar_path/arcus-java-client-1.9.2.jar" .
     ":$jar_path/zookeeper-3.4.5.jar:$jar_path/log4j-1.2.16.jar" .
     ":$jar_path/slf4j-api-1.6.1.jar:$jar_path/slf4j-log4j12-1.6.1.jar";
 
@@ -75,6 +75,7 @@ close CONF;
 $cmd = "perl config_file_generator.pl tmp-default-config.txt basic_repl_test_description.txt";
 system($cmd);
 
+# for full test
 @configfile_list = (
     "config-repl-standard_mix.txt"
   , "config-repl-simple_getset.txt"
@@ -97,12 +98,12 @@ system($cmd);
   , "config-repl-torture_simple_decinc.txt"
   , "config-repl-torture_list_ins_bulkdel.txt"
   , "config-repl-torture_btree_ins_bulkdel.txt"
-  , "config-repl-torture_list_ins_maxelement.txt"
   , "config-repl-torture_list_ins_getwithdelete.txt"
   , "config-repl-torture_btree_ins_getwithdelete.txt"
   , "config-repl-torture_set_ins_getwithdelete.txt"
-  , "config-repl-simple_set_1mb.txt"
   , "config-repl-torture_btree_ins_maxelement.txt"
+  , "config-repl-torture_list_ins_maxelement.txt"
+  , "config-repl-simple_set_1mb.txt"
   , "config-repl-list_bulk_ins.txt"
   , "config-repl-list_bulk_piped_ins.txt"
   , "config-repl-set_bulk_ins.txt"
@@ -121,6 +122,12 @@ system($cmd);
   , "config-repl-simple_async_incr.txt"
   , "config-repl-simple_async_decr.txt"
 );
+
+# for partial test
+#@configfile_list = (
+#  "config-repl-torture_btree_ins_maxelement.txt"
+#  , "config-repl-torture_list_ins_maxelement.txt"
+#);
 
 #$cmd = "rm -f __can_test_failure__";
 #system($cmd);
@@ -141,31 +148,31 @@ foreach $configfile (@configfile_list) {
   system($cmd);
 
   if ($failure_type eq "all_kill") {
-    $cmd = "./loop.memcached.bash $m_port $s_port all KILL 10 10 1000000 &";
+    $cmd = "./loop.memcached.bash $m_port $s_port all KILL 5 5 1000000 &";
     $ret = system($cmd);
   }
   elsif ($failure_type eq "all_stop") {
-    $cmd = "./loop.memcached.bash $m_port $s_port all INT 10 10 1000000 &";
+    $cmd = "./loop.memcached.bash $m_port $s_port all INT 5 5 1000000 &";
     $ret = system($cmd);
   }
   elsif ($failure_type eq "master_kill") {
-    $cmd = "./loop.memcached.bash $m_port $s_port master KILL 10 10 1000000 &";
+    $cmd = "./loop.memcached.bash $m_port $s_port master KILL 5 5 1000000 &";
     $ret = system($cmd);
   }
   elsif ($failure_type eq "master_stop") {
-    $cmd = "./loop.memcached.bash $m_port $s_port master INT 10 10 1000000 &";
+    $cmd = "./loop.memcached.bash $m_port $s_port master INT 5 5 1000000 &";
     $ret = system($cmd);
   }
   elsif ($failure_type eq "slave_kill") {
-    $cmd = "./loop.memcached.bash $m_port $s_port slave KILL 10 10 1000000 &";
+    $cmd = "./loop.memcached.bash $m_port $s_port slave KILL 5 5 1000000 &";
     $ret = system($cmd);
   }
   elsif ($failure_type eq "slave_stop") {
-    $cmd = "./loop.memcached.bash $m_port $s_port slave INT 10 10 1000000 &";
+    $cmd = "./loop.memcached.bash $m_port $s_port slave INT 5 5 1000000 &";
     $ret = system($cmd);
   }
   elsif ($failure_type eq "switchover") {
-    $cmd = "./loop.switchover.bash $m_port $s_port 10 10 1000000 &";
+    $cmd = "./loop.switchover.bash $m_port $s_port 5 5 1000000 &";
     $ret = system($cmd);
   }
 
@@ -187,7 +194,7 @@ foreach $configfile (@configfile_list) {
 
   # Run comparison tool
   if ($compare_flag) {
-    sleep 40; # for stopping loop.*.bash
+    sleep 10; # for stopping loop.*.bash
 
     $cmd = "./start_memcached.bash"; # to make sure that master & slave run
     $ret = system($cmd);
@@ -208,6 +215,23 @@ foreach $configfile (@configfile_list) {
     system($comp_cmd);
   }
 }
+
+if ($compare_flag == 0) {
+  print "sleep 10\n";
+  sleep 10; # for stopping loop.*.bash
+}
+
+# restart memcached nodes due to overused pages
+$cmd = "pkill -INT memcached";
+print "$cmd\n";
+system($cmd);
+print "sleep 5\n";
+sleep 5;
+$cmd = "./start_memcached.bash";
+print "$cmd\n";
+system($cmd);
+print "sleep 5\n";
+sleep 5;
 
 print "END RUN_MC_TESTSCRIPTS\n";
 print "To see errors.  Try grep -e \"RUN COMMAND\" -e \"DIFFRENT\" -e \"bad=\" -e \"not ok\"\n";
