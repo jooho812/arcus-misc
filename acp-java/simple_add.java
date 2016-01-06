@@ -42,7 +42,8 @@ public class simple_add implements client_profile {
     Future<Boolean> f = cli.next_ac.add(key, cli.conf.client_exptime, val);
     boolean ok = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
     if (!ok) {
-      System.out.printf("add failed. id=%d key=%s\n", cli.id, key);
+      //System.out.printf("add failed. id=%d key=%s : cannot run if key exists. stop.\n", cli.id, key);
+      return false; /* stop : add() cannot run if key exist */
     }
     if (!cli.after_request(ok))
       return false;
