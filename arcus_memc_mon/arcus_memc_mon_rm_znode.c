@@ -16,15 +16,11 @@
 #include "arcus_memc_mon_logger.h"
 #include "arcus_memc_mon_rm_znode.h"
 
-typedef struct REPL_MAPPING_INFO {
-    char   svc[32];
-    char   group_name[32];
-    char   listen_addr[32];
-} repl_mapping_info_t;
-
-#define ZNODE_PATH_LEN              1024
 #define ZK_DEFAULT_SESSION_TIMEOUT  100000
 #define DEFAULT_ZK_ESEMBLE          "127.0.0.1:2181"
+
+#define MASTER_NODE 1
+#define SLAVE_NODE  0
 
 zhandle_t   *zh = NULL;
 char        *zk_esemble = DEFAULT_ZK_ESEMBLE;
@@ -36,20 +32,17 @@ int         expired = 0;
 
 static int  use_syslog = 0;
 
-struct sockaddr_in   myaddr;
-struct hostent       *host;
-
 const char  *zk_root             = "/arcus";
-const char  *zk_cache_path       = "cache_list";
-const char  *zk_map_path         = "cache_server_mapping"; 
 const char  *zk_repl_root        = "/arcus_repl";
+const char  *zk_map_path         = "cache_server_mapping"; 
+const char  *zk_cache_path       = "cache_list";
 #if YSKIM_REPL_ZK_NODE
 const char  *zk_repl_group_path  = "group_list";
 #else
 const char  *zk_repl_group_path  = "cache_server_group";
 #endif
 
-#define ZK_RM_ZNODE_ERR_LOG(rc, path) \
+#define ZK_ERR_LOG(rc, path) \
         PRINT_LOG_NOTI("Zookeeper error. zpath=%s, error=%d(%s), %s:%d\n", path, rc, zerror(rc), __FILE__, __LINE__)
 
 void
@@ -103,244 +96,23 @@ zk_arcus_mon_init(char *zk, char *proc_name, int sys_log)
 void
 zk_arcus_mon_free()
 {
-    if (!zh)
+    if (zh)
         zookeeper_close(zh);
 }
 
-/* 
- * return memcached node type
- *        non replication is  ORG_MEMC_NODE
- *        replication is      REP_MEMC_NODE
- *        error               NDF_MEMC_NODE
- */
-int
-zk_get_memc_node_type(char *address)
-{
-    int      node_type = 0;
-    char     znode_path[ZNODE_PATH_LEN];
-    char     znode_repl_path[ZNODE_PATH_LEN];
-
-    /* 
-     * non repl znode
-     * /arcus/cache_server_mapping/ip:port/{svc}
-     * repl znode
-     * /arcus_repl/cache_server_mapping/ip:port/{svc}^{group}^{listen_ip:port}
-     */
-    snprintf(znode_path, ZNODE_PATH_LEN, "%s/%s/%s", zk_root, zk_map_path, address);
-    snprintf(znode_repl_path, ZNODE_PATH_LEN, "%s/%s/%s", zk_repl_root, zk_map_path, address);
-
-    if (zoo_exists(zh, znode_path, 0, NULL) == ZOK)
-        node_type = ORG_MEMC_NODE;
-    else if (zoo_exists(zh, znode_repl_path, 0, NULL) == ZOK)
-        node_type = REP_MEMC_NODE;
-    else
-        node_type = NDF_MEMC_NODE;
-
-    return node_type;
-}
-
-/*
- * return success repl_mapping_info_t, fail NULL
- */
-repl_mapping_info_t *
-zk_get_svc_group(char *address, int node_type)
-{
-    repl_mapping_info_t   *mapping_info = NULL;
-    struct String_vector  str_v = {0, NULL};
-    char                  znode_path[ZNODE_PATH_LEN];
-    char                  *mapping_str = NULL;
-    char                  *last_buf = NULL;
-    int                   rc = 0;
-
-    /*
-     * /arcus/cache_server_mapping/ip:port/{svc}
-     * or
-     * /arcus_repl/cache_server_mapping/ip:port/{svc}^{group}^{listen_ip:port}
-     */
-    snprintf(znode_path, ZNODE_PATH_LEN, "%s/%s/%s",
-            node_type == REP_MEMC_NODE ? zk_repl_root : zk_root, zk_map_path, address);
-
-    rc = zoo_get_children(zh, znode_path, 0, &str_v);
-    if (rc != ZOK) {
-        ZK_RM_ZNODE_ERR_LOG(rc, znode_path);
-        deallocate_String_vector(&str_v);
-        return NULL;
-    } else if (str_v.count == 0) {
-        ZK_RM_ZNODE_ERR_LOG(rc, znode_path);
-        deallocate_String_vector(&str_v);
-        return NULL;
-    }
-
-
-    mapping_info = (repl_mapping_info_t*)malloc(sizeof(repl_mapping_info_t));
-    memset(mapping_info, 0, sizeof(repl_mapping_info_t));
-
-    if (node_type) {
-        /* mapping_str == {svc}^{group}^{listen_ip:port} */
-        mapping_str = strdup(str_v.data[0]);
-
-        strcpy(mapping_info->svc, strtok_r(mapping_str, "^", &last_buf)); 
-        strcpy(mapping_info->group_name, strtok_r(NULL, "^", &last_buf));
-        strcpy(mapping_info->listen_addr, last_buf);
-
-        free(mapping_str);
-    } else {
-        strcpy(mapping_info->svc, str_v.data[0]);
-    }
-
-    deallocate_String_vector(&str_v);
-
-    return mapping_info;
-}
-
 /*
  * return success 0, fail -1
  */
 int
-zk_rm_init_group_matched_node(char *address, repl_mapping_info_t *mapping_info, zoo_op_t *op, char *op_path)
+get_host(char *address, char *host_name)
 {
-    int         i = 0, rc = 0;
-    char        znode_path[ZNODE_PATH_LEN];
-
-    struct String_vector str_v = {0, NULL};
-
-#if YSKIM_REPL_ZK_NODE
-    snprintf(znode_path, ZNODE_PATH_LEN, "%s/%s/%s/%s",
-            zk_repl_root, zk_repl_group_path, mapping_info->svc, mapping_info->group_name);
-#else
-    snprintf(znode_path, ZNODE_PATH_LEN, "%s/%s/%s/%s/lock",
-            zk_repl_root, zk_repl_group_path, mapping_info->svc, mapping_info->group_name);
-#endif
-
-    /* get */
-    rc = zoo_get_children(zh, znode_path, 0, &str_v);
-    if (rc != ZOK) {
-        ZK_RM_ZNODE_ERR_LOG(rc, znode_path);
-        deallocate_String_vector(&str_v);
-        return -1;
-    }
-
-#if YSKIM_REPL_ZK_NODE
-    /*
-     * find matched znode
-     * /arcus_repl/cache_server_group/{svc}/{group}/{ip:port}^{listen_ip:port}^seq
-     */
-#else
-    /*
-     * find matched znode
-     * /arcus_repl/cache_server_group/{svc}/{group}/lock/{ip:port}^{listen_ip:port}^seq
-     */
-#endif
-    for (i = 0; i < str_v.count; i++) {
-        if (strstr(str_v.data[i], address) != NULL)
-            break;
-    }
-
-    if (str_v.count == 0 || i == str_v.count) {
-        ZK_RM_ZNODE_ERR_LOG(rc, znode_path);
-        deallocate_String_vector(&str_v);
-        return -1;
-    }
-
-#if YSKIM_REPL_ZK_NODE
-    /*
-     * delete matched znode
-     * /arcus_repl/cache_server_group/{svc}/{group}/{ip:port}^{listen_ip:port}^seq
-     */
-    snprintf(op_path, ZNODE_PATH_LEN, "%s/%s/%s/%s/%s",
-            zk_repl_root, zk_repl_group_path, mapping_info->svc, mapping_info->group_name, str_v.data[i]);
-#else
-    /*
-     * delete matched znode
-     * /arcus_repl/cache_server_group/{svc}/{group}/lock/{ip:port}^{listen_ip:port}^seq
-     */
-    snprintf(op_path, ZNODE_PATH_LEN, "%s/%s/%s/%s/lock/%s",
-            zk_repl_root, zk_repl_group_path, mapping_info->svc, mapping_info->group_name, str_v.data[i]);
-#endif
-
-    zoo_delete_op_init(op, op_path, -1);
-
-    deallocate_String_vector(&str_v);
-
-    return 0;
-}
-
-/*
- * return success 0, fail -1
- */
-int
-zk_rm_init_cache_list(char *address, int node_type, repl_mapping_info_t *mapping_info, zoo_op_t *op, char *op_path)
-{
-    int         i = 0, rc = 0;
-    char        znode_path[ZNODE_PATH_LEN];
-    char        memc_mnode_name[ZNODE_PATH_LEN];
-    char        memc_snode_name[ZNODE_PATH_LEN];
-    char        memc_node_name[ZNODE_PATH_LEN];
-
-    struct String_vector str_v = {0, NULL};
-
-    /*
-     * /arcus/cache_list/{svc}/{ip:port-hostname}"
-     * or
-     * /arcus_repl/cache_list/{svc}/{group}^{M/S}^{ip:port-hostname}
-     */
-    snprintf(znode_path, ZNODE_PATH_LEN, "%s/%s/%s",
-            node_type == REP_MEMC_NODE ? zk_repl_root : zk_root, zk_cache_path, mapping_info->svc);
-    rc = zoo_get_children(zh, znode_path, 0, &str_v);
-
-    if (rc != ZOK) {
-        ZK_RM_ZNODE_ERR_LOG(rc, znode_path);
-        deallocate_String_vector(&str_v);
-        return -1;
-    }
-
-    if (node_type) {
-        snprintf(memc_mnode_name, ZNODE_PATH_LEN, "%s^%s^%s-%s",
-                mapping_info->group_name, "M", address, host->h_name);
-        snprintf(memc_snode_name, ZNODE_PATH_LEN, "%s^%s^%s-%s",
-                mapping_info->group_name, "S", address, host->h_name);
-
-        for (i = 0; i < str_v.count; i++) {
-            if (strstr(str_v.data[i], memc_mnode_name) != NULL || 
-                    strstr(str_v.data[i], memc_snode_name) != NULL)
-                break;
-        }
-    } else {
-        snprintf(memc_node_name, ZNODE_PATH_LEN, "%s-%s", address, host->h_name);
-        for (i = 0; i < str_v.count; i++) {
-            if (strstr(str_v.data[i], memc_node_name) != NULL)
-                break;
-        }
-    }
-
-    if (str_v.count == 0 || i == str_v.count) {
-        ZK_RM_ZNODE_ERR_LOG(ZNONODE, znode_path);
-        deallocate_String_vector(&str_v);
-        return -1;
-    }
-
-    snprintf(op_path, ZNODE_PATH_LEN, "%s/%s/%s/%s",
-            node_type == REP_MEMC_NODE ? zk_repl_root : zk_root, zk_cache_path, mapping_info->svc, str_v.data[i]);
-
-    zoo_delete_op_init(op, op_path, -1);
-
-    deallocate_String_vector(&str_v);
-
-    return 0;
-}
-
-/*
- * return success 0, fail -1
- */
-int
-get_host_name(char *address)
-{
+    in_addr_t            in_addr;
+    struct hostent       *host;
     char *addr_buf = NULL, *ip = NULL;
 
     addr_buf = strdup(address);
     if (addr_buf == NULL) {
         PRINT_LOG_ERR("address buffer allocation error to get host name. strdup");
-
         return -1;
     }
 
@@ -348,23 +120,204 @@ get_host_name(char *address)
     if (ip == NULL) {
         PRINT_LOG_NOTI("The address to get host name is not ip:port format.\n");
         free(addr_buf);
-        
+
         return -1;
     }
 
-    memset(&myaddr, 0, sizeof(myaddr));
-    myaddr.sin_addr.s_addr = inet_addr(ip);
-
-    host = gethostbyaddr((char*)&myaddr.sin_addr.s_addr, 
-            sizeof(myaddr.sin_addr.s_addr), AF_INET);
+    in_addr = inet_addr(ip);
+    host = gethostbyaddr(&in_addr, sizeof(in_addr), AF_INET);
     if (host == NULL) {
-        PRINT_LOG_ERR("host name get error. gethostbyaddr");
-        free(addr_buf);
+        if (strcmp(getenv("ARCUS_CACHE_PUBLIC_IP"), ip) == 0) {
+            in_addr = inet_addr("127.0.0.1");
+            host = gethostbyaddr(&in_addr, sizeof(in_addr), AF_INET);
 
+            strcpy(host_name, host->h_name);
+        } else if (gethostname(host_name, 36) < 0) {
+            PRINT_LOG_ERR("host name get error. gethostbyaddr");
+            free(addr_buf);
+
+            return -1;
+        }
+    } else {
+        strcpy(host_name, host->h_name);
+    }
+    free(addr_buf);
+
+    return 0;
+}
+
+/* 
+ * return success mapping_info_t, fail NULL
+ */
+mapping_info_t*
+zk_get_node_mapping_info(char *address)
+{
+    int                   i;
+
+    char                  znode_path[ZNODE_PATH_LEN];
+    char                  znode_repl_path[ZNODE_PATH_LEN];
+    mapping_info_t        *mapping_info = NULL;
+
+    int                   rc = 0;
+    struct String_vector  str_v = {0, NULL};
+    struct Stat           stat;
+    char                  get_buf[10];
+    int                   get_lbuf;
+
+    char                  *mapping_str = NULL;
+    char                  *last_buf = NULL;
+    char                  svc[32];
+    char                  group_name[32];
+    char                  host_name[256]; /* max hostname size is 256 bytes, but gethostname return max 36 bytes */
+
+    mapping_info = (mapping_info_t*)malloc(sizeof(mapping_info_t));
+    memset(mapping_info, 0, sizeof(mapping_info_t));
+
+    /* 
+     * find znode that match address
+     * /arcus/cache_server_mapping/ip:port/{svc}
+     * /arcus_repl/cache_server_mapping/ip:port/{svc}^{group}^{listen_ip:port}
+     */
+    snprintf(znode_path, ZNODE_PATH_LEN, "%s/%s/%s", zk_root, zk_map_path, address);
+    snprintf(znode_repl_path, ZNODE_PATH_LEN, "%s/%s/%s", zk_repl_root, zk_map_path, address);
+    if (zoo_exists(zh, znode_path, 0, NULL) == ZOK)
+        mapping_info->node_type = ORG_MEMC_NODE;
+    else if (zoo_exists(zh, znode_repl_path, 0, NULL) == ZOK)
+        mapping_info->node_type = REP_MEMC_NODE;
+    else {
+        free(mapping_info);
+        return NULL;
+    }
+
+    rc = zoo_get_children(zh, mapping_info->node_type == REP_MEMC_NODE ? znode_repl_path : znode_path, 0, &str_v);
+    if (rc != ZOK || str_v.count == 0) {
+        ZK_ERR_LOG(rc, mapping_info->node_type == REP_MEMC_NODE ? znode_repl_path : znode_path);
+        free(mapping_info);
+        deallocate_String_vector(&str_v);
+        return NULL;
+    }
+
+    if (mapping_info->node_type == REP_MEMC_NODE) {
+        /* mapping_str == {svc}^{group}^{listen_ip:port} */
+        mapping_str = strdup(str_v.data[0]);
+
+        strcpy(svc, strtok_r(mapping_str, "^", &last_buf)); 
+        strcpy(group_name, strtok_r(NULL, "^", &last_buf));
+
+        free(mapping_str);
+    } else {
+        /* mapping_str == {svc} */
+        strcpy(svc, str_v.data[0]);
+    }
+    deallocate_String_vector(&str_v);
+
+    if (mapping_info->node_type == REP_MEMC_NODE) {
+#if YSKIM_REPL_ZK_NODE
+        /* 
+         * find group list path 
+         * /arcus_repl/group_list/{svc}/{group}
+         */ 
+        snprintf(znode_path, ZNODE_PATH_LEN,
+                 "%s/%s/%s/%s",
+                 zk_repl_root, zk_repl_group_path, svc, group_name);
+#else
+        /* 
+         * find group list path 
+         * /arcus_repl/cache_server_group/{svc}/{group}/lock
+         */ 
+        snprintf(znode_path, ZNODE_PATH_LEN,
+                 "%s/%s/%s/%s/lock",
+                 zk_repl_root, zk_repl_group_path, svc, group_name);
+#endif
+        rc = zoo_get_children(zh, znode_path, 0, &str_v);
+        if (rc != ZOK) {
+            ZK_ERR_LOG(rc, znode_path);
+            deallocate_String_vector(&str_v);
+            free(mapping_info);
+            return NULL;
+        }
+
+        for (i = 0; i < str_v.count; i++) {
+            if (strstr(str_v.data[i], address) != NULL)
+                break;
+        }
+
+        if (str_v.count == 0 || i == str_v.count) {
+            ZK_ERR_LOG(rc, znode_path);
+            deallocate_String_vector(&str_v);
+            return NULL;
+        }
+
+#if YSKIM_REPL_ZK_NODE
+        /*
+         * make group list path
+         * /arcus_repl/group_list/{svc}/{group}/{ip:port}^{listen_ip:port}^seq
+         */
+        snprintf(mapping_info->group_list_path, ZNODE_PATH_LEN,
+                 "%s/%s/%s/%s/%s",
+                 zk_repl_root, zk_repl_group_path, svc, group_name, str_v.data[i]);
+#else
+        /*
+         * make group list path
+         * /arcus_repl/cache_server_group/{svc}/{group}/lock/{ip:port}^{listen_ip:port}^seq
+         */
+        snprintf(mapping_info->group_list_path, ZNODE_PATH_LEN,
+                 "%s/%s/%s/%s/lock/%s",
+                 zk_repl_root, zk_repl_group_path, svc, group_name, str_v.data[i]);
+#endif
+        deallocate_String_vector(&str_v);
+    }
+
+    /* make cache list path */ 
+    if (get_host(address, host_name) < 0)
+        return NULL;
+
+    /* don't make cache list for replication node */
+    if (mapping_info->node_type == ORG_MEMC_NODE) {
+        /*
+         * /arcus/cache_list/{svc}/{ip:port-hostname}
+         */
+        snprintf(mapping_info->cache_list_path, ZNODE_PATH_LEN,
+                 "%s/%s/%s/%s-%s",
+                 zk_root, zk_cache_path, svc, address, host_name);
+    }
+
+    /* get ephemeralOwner of znode */
+    rc = zoo_get(zh, mapping_info->node_type == REP_MEMC_NODE ? mapping_info->group_list_path :
+                                                                mapping_info->cache_list_path, 0, get_buf, &get_lbuf, &stat);
+    if (rc != ZOK) {
+        ZK_ERR_LOG(rc, mapping_info->node_type == REP_MEMC_NODE ? mapping_info->group_list_path :
+                                                                  mapping_info->cache_list_path);
+        free(mapping_info);
+        return NULL;
+    }
+    mapping_info->ephemeralOwner = stat.ephemeralOwner;
+ 
+    return mapping_info;
+}
+
+/*
+ * return success 0, fail -1
+ */
+int
+zk_rm_init_group_matched_node(mapping_info_t *mapping_info, zoo_op_t *op)
+{
+    int                   rc = 0;
+    struct Stat           stat;
+    char                  get_buf[10];
+    int                   get_lbuf;
+
+    /* check ephemeralOwner */
+    rc = zoo_get(zh, mapping_info->group_list_path, 0, get_buf, &get_lbuf, &stat);
+    if (rc != ZOK) {
+        ZK_ERR_LOG(rc, mapping_info->group_list_path);
         return -1;
     }
 
-    free(addr_buf);
+    if (mapping_info->ephemeralOwner != stat.ephemeralOwner)
+        return -1;
+
+    zoo_delete_op_init(op, mapping_info->group_list_path, -1);
 
     return 0;
 }
@@ -373,48 +326,120 @@ get_host_name(char *address)
  * return success 0, fail -1
  */
 int
-zk_rm_znode(char *address, int node_type)
+zk_rm_init_cache_list(mapping_info_t *mapping_info, zoo_op_t *op)
+{
+    int                   i;
+    int                   rc = 0;
+    struct Stat           stat;
+    char                  get_buf[10];
+    int                   get_lbuf;
+
+    struct String_vector  str_v = {0, NULL};
+    char                  znode_path[ZNODE_PATH_LEN];
+ 
+    /* if replication node
+     * then make cache list znode path
+     */
+    if (mapping_info->node_type == REP_MEMC_NODE) {
+        /* get address and service code*/
+        char org[128];
+        char *temp, *last_buf;
+        char *svc, *address;
+        
+        strcpy(org, mapping_info->group_list_path);
+        strtok_r(org, "/", &last_buf);
+        strtok_r(NULL, "/", &last_buf);
+        svc = strtok_r(NULL, "/", &last_buf);
+        strtok_r(NULL, "/", &last_buf);
+        temp = strtok_r(NULL, "/", &last_buf);
+        address = strtok_r(temp, "^", &last_buf);
+        /*
+         * /arcus_repl/cache_list/{svc}/{group}^{M/S}^{ip:port-hostname}
+         */
+        snprintf(znode_path, ZNODE_PATH_LEN, "%s/%s/%s", zk_repl_root, zk_cache_path, svc);
+        rc = zoo_get_children(zh, znode_path, 0, &str_v);
+        if (rc != ZOK) {
+            ZK_ERR_LOG(rc, znode_path);
+            deallocate_String_vector(&str_v);
+            return -1;
+        }
+
+        for (i = 0; i < str_v.count; i++) {
+            if (strstr(str_v.data[i], address) != NULL) 
+                break;
+        }
+
+        if (str_v.count == 0 || i == str_v.count) {
+            ZK_ERR_LOG(ZNONODE, znode_path);
+            deallocate_String_vector(&str_v);
+            return -1;
+        }
+
+        snprintf(mapping_info->cache_list_path, ZNODE_PATH_LEN, "%s/%s/%s/%s", zk_repl_root, zk_cache_path, svc, str_v.data[i]);
+        deallocate_String_vector(&str_v);
+    }
+
+    /* check ephemeralOwner */
+    rc = zoo_get(zh, mapping_info->cache_list_path, 0, get_buf, &get_lbuf, &stat);
+    if (rc != ZOK) {
+        ZK_ERR_LOG(rc, mapping_info->cache_list_path);
+        return -1;
+    }
+
+    if (mapping_info->ephemeralOwner != stat.ephemeralOwner)
+        return -1;
+
+    zoo_delete_op_init(op, mapping_info->cache_list_path, -1);
+
+    return 0;
+}
+
+/*
+ * return success 0, fail -1
+ */
+int
+zk_rm_znode(mapping_info_t *mapping_info)
 {
 #define RM_ZNODE_OP_COUNT 2
-    repl_mapping_info_t  *mapping_info = NULL;
     zoo_op_t             ops[RM_ZNODE_OP_COUNT];
-    char                 op_path[RM_ZNODE_OP_COUNT][ZNODE_PATH_LEN];
     zoo_op_result_t      results[RM_ZNODE_OP_COUNT];
     int                  i, rc = -1;
-
-    /* get host name by ip address */
-    if (get_host_name(address) < 0)
-        return rc;
+    int                  op_count = 0;
 
     do {
-        /* get service code and group name */
-        if ((mapping_info = zk_get_svc_group(address, node_type)) == NULL)
-            break;
-
         /*
          * get cache_server_group children znode
          * find matched znode
          * delete matched znode
          */
-        if (node_type == REP_MEMC_NODE &&
-            zk_rm_init_group_matched_node(address, mapping_info, &ops[0], op_path[0]) < 0)
+        if (mapping_info->node_type == REP_MEMC_NODE &&
+            zk_rm_init_group_matched_node(mapping_info, &ops[0]) < 0)
             break;
 
         /*
          * find and delete cache_list znode
          * /arcus_repl/cache_list/{svc}/{group}^{M/S}^{ip:port-hostname}
          */
-        if (zk_rm_init_cache_list(address, node_type, mapping_info, &ops[1], op_path[1]) < 0)
+        if (mapping_info->node_type == ORG_MEMC_NODE &&
+            zk_rm_init_cache_list(mapping_info, &ops[0]) < 0)
+            break;
+        else if (mapping_info->node_type == REP_MEMC_NODE &&
+                 zk_rm_init_cache_list(mapping_info, &ops[1]) < 0)
             break;
 
-        if ((rc = zoo_multi(zh, RM_ZNODE_OP_COUNT, ops, results)) == ZOK) {
-            PRINT_LOG_INFO("Delete cache server group znode : %s\n", ops[0].delete_op.path);
-            PRINT_LOG_INFO("Delete cache list znode : %s\n", ops[1].delete_op.path);
+        op_count = mapping_info->node_type == REP_MEMC_NODE ? 2 : 1;
+        if ((rc = zoo_multi(zh, op_count, ops, results)) == ZOK) {
+            if (mapping_info->node_type == REP_MEMC_NODE) {
+                PRINT_LOG_INFO("Delete cache server group znode : %s\n", ops[0].delete_op.path);
+                PRINT_LOG_INFO("Delete cache list znode : %s\n", ops[1].delete_op.path);
+            } else {
+                PRINT_LOG_INFO("Delete cache list znode : %s\n", ops[0].delete_op.path);
+            }
             rc = 0;
         } else {
-            ZK_RM_ZNODE_ERR_LOG(rc, "zoo_multi");
-            for (i = 0; i < RM_ZNODE_OP_COUNT; i++)
-                ZK_RM_ZNODE_ERR_LOG(results[i].err, op_path[i]);
+            ZK_ERR_LOG(rc, "zoo_multi");
+            for (i = 0; i < op_count; i++)
+                ZK_ERR_LOG(results[i].err, ops[i].delete_op.path);
             rc = -1;
         }
     } while (0);
@@ -423,78 +448,4 @@ zk_rm_znode(char *address, int node_type)
         free(mapping_info);
 
     return rc;
-}
-
-/*
- * return : if exist 1, not 0, error -1
- */
-int
-zk_check_exist(char *address, int node_type)
-{
-    repl_mapping_info_t  *mapping_info = NULL;
-
-    int         i = 0, rc = 0, exist_node = NODE_NOT_EXIST;
-    char        znode_path[ZNODE_PATH_LEN];
-    char        memc_mnode_name[ZNODE_PATH_LEN];
-    char        memc_snode_name[ZNODE_PATH_LEN];
-    char        memc_node_name[ZNODE_PATH_LEN];
-
-    struct String_vector str_v = {0, NULL};
-
-    /* get host name by ip address */
-    if (get_host_name(address) < 0)
-        return -1;
-
-    do {
-        /* get service code and group name */
-        if ((mapping_info = zk_get_svc_group(address, node_type)) == NULL)
-            break;
-
-        /*
-         * /arcus/cache_list/{svc}/{ip:port-hostname}"
-         * or
-         * /arcus_repl/cache_list/{svc}/{group}^{M/S}^{ip:port-hostname}
-         */
-        snprintf(znode_path, ZNODE_PATH_LEN, "%s/%s/%s",
-                node_type == REP_MEMC_NODE ? zk_repl_root : zk_root, zk_cache_path, mapping_info->svc);
-        rc = zoo_get_children(zh, znode_path, 0, &str_v);
-
-        if (rc == ZNONODE) {
-            break;
-        } else if (rc != ZOK) {
-            ZK_RM_ZNODE_ERR_LOG(rc, znode_path);
-            break;
-        }
-
-        if (node_type) {
-            snprintf(memc_mnode_name, ZNODE_PATH_LEN, "%s^%s^%s-%s",
-                    mapping_info->group_name, "M", address, host->h_name);
-            snprintf(memc_snode_name, ZNODE_PATH_LEN, "%s^%s^%s-%s",
-                    mapping_info->group_name, "S", address, host->h_name);
-
-            for (i = 0; i < str_v.count; i++) {
-                if (strstr(str_v.data[i], memc_mnode_name) != NULL || 
-                        strstr(str_v.data[i], memc_snode_name) != NULL) {
-                    exist_node = NODE_EXIST;
-                    break;
-                }
-            }
-        } else {
-            snprintf(memc_node_name, ZNODE_PATH_LEN, "%s-%s", address, host->h_name);
-            for (i = 0; i < str_v.count; i++) {
-                if (strstr(str_v.data[i], memc_node_name) != NULL) {
-                    exist_node = NODE_EXIST;
-                    break;
-                }
-            }
-        }
-
-    } while (0);
-
-    if (mapping_info != NULL)
-        free(mapping_info);
-
-    deallocate_String_vector(&str_v);
-
-    return exist_node;
 }

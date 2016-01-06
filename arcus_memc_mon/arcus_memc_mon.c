@@ -38,8 +38,8 @@
 
 typedef struct memcached_info {
     pid_t                   pid;
-    char                    *addr;
-    int                     node_type;
+    char                    *address;
+    mapping_info_t          *mapping_info;
     struct memcached_info   *prev;
     struct memcached_info   *next;
 } memcached_info_t;
@@ -86,7 +86,8 @@ memc_list_free()
 
     while (tmp != NULL) {
         m_list.memc_head = tmp->next;
-        free(tmp->addr);
+        free(tmp->mapping_info);
+        free(tmp->address);
         free(tmp);
         tmp = m_list.memc_head;
     }
@@ -100,7 +101,7 @@ memc_list_free()
 }
 
 int
-memc_insert(pid_t pid, char *addr, int node_type)
+memc_insert(pid_t pid, char *address, mapping_info_t *mapping_info)
 {
     memcached_info_t *tmp;
     tmp = (memcached_info_t*)malloc(sizeof(memcached_info_t));
@@ -110,13 +111,13 @@ memc_insert(pid_t pid, char *addr, int node_type)
     }
 
     tmp->pid = pid;
-    tmp->addr = strdup(addr);
-    if (tmp->addr == NULL) {
+    tmp->address = strdup(address);
+    if (tmp->address == NULL) {
         PRINT_LOG_ERR("Memcached list item info creation error. strdup");
         free(tmp);
         return -1;
     }
-    tmp->node_type = node_type;
+    tmp->mapping_info = mapping_info;
     tmp->prev = NULL;
     tmp->next = NULL;
 
@@ -158,7 +159,8 @@ memc_delete(memcached_info_t *del_memc)
             m_list.memc_head = del_memc->next;
     }
 
-    free(del_memc->addr);
+    free(del_memc->mapping_info);
+    free(del_memc->address);
     free(del_memc);
 
     return 0;
@@ -329,15 +331,15 @@ get_pid(char *file_name)
  * return register success 0, fail -1
  */
 int
-mon_regi_memcached(pid_t pid, char *addr)
+mon_regi_memcached(pid_t pid, char *address)
 {
-    int              node_type = 0;
-    memcached_info_t *tmp_mc_info = NULL;
+    mapping_info_t   *mapping_info;
+    memcached_info_t      *tmp_mc_info = NULL;
 
     /* if pid = 1 is init process */
-    if (pid <= (pid_t)1 || addr == NULL) {
+    if (pid <= (pid_t)1 || address == NULL) {
         PRINT_LOG_NOTI("invalid pid (%d) or ip:port address (%s)\n", 
-                pid, addr ? addr : "NULL");
+                pid, address ? address : "NULL");
         return MON_REGI_ERR;
     }
 
@@ -346,7 +348,7 @@ mon_regi_memcached(pid_t pid, char *addr)
      * don't register 
      */
     if (contains_proc_stat(pid, DEFAULT_MEMC_NAME) != 1) {
-        PRINT_LOG_NOTI("(%d, %s) is not memcached node. Ignore it.\n", pid, addr);
+        PRINT_LOG_NOTI("(%d, %s) is not memcached node. Ignore it.\n", pid, address);
         return MON_REGI_ERR;
     }
 
@@ -359,10 +361,10 @@ mon_regi_memcached(pid_t pid, char *addr)
              * case : one action (create, modify) occur two or three event
              * case : user create pid file. prev mistake delete pid file, then already monitoring
              */
-            if (strcmp(tmp_mc_info->addr, addr) == 0) {
+            if (strcmp(tmp_mc_info->address, address) == 0) {
                 PRINT_LOG_NOTI("Memcached%snode is already registered. Ignore it. : (%d, %s)\n",
-                               tmp_mc_info->node_type == REP_MEMC_NODE ? " repl " : " ",
-                               pid, addr);
+                               tmp_mc_info->mapping_info->node_type == REP_MEMC_NODE ? " repl " : " ",
+                               pid, address);
                 return MON_REGI_DUP;
             }
 
@@ -371,7 +373,7 @@ mon_regi_memcached(pid_t pid, char *addr)
              * unregister previous info and new info register
              */
             PRINT_LOG_NOTI("Memcached info changed. : (%d, %s) --> (%d, %s)\n",
-                           tmp_mc_info->pid, tmp_mc_info->addr, pid, addr);
+                           tmp_mc_info->pid, tmp_mc_info->address, pid, address);
 
             memc_delete(tmp_mc_info);
             break;
@@ -379,19 +381,22 @@ mon_regi_memcached(pid_t pid, char *addr)
         tmp_mc_info = tmp_mc_info->next;
     }
 
-    /* get memcached node type */
-    if ((node_type = zk_get_memc_node_type(addr)) == NDF_MEMC_NODE) {
-        PRINT_LOG_NOTI("Memcached node does not exist on zookeeper. : (%d, %s)\n", pid, addr);
+    /* get memcached node type
+     * must sleep!
+     * sometimes not yet create cache list
+     */
+    if ((mapping_info = zk_get_node_mapping_info(address)) == NULL) {
+        PRINT_LOG_NOTI("Memcached node does not exist on zookeeper. : (%d, %s)\n", pid, address);
         return MON_REGI_ERR;
     }
 
     /* register */
-    if (memc_insert (pid, addr, node_type) != 0)
+    if (memc_insert(pid, address, mapping_info) != 0)
         return MON_REGI_ERR;
 
     PRINT_LOG_NOTI("Register memcached%snode. Start monitoring. : (%d, %s)\n",
-                    node_type == REP_MEMC_NODE ? " repl " : " ",
-                    pid, addr);
+                    mapping_info->node_type == REP_MEMC_NODE ? " repl " : " ",
+                    pid, address);
 
     return 0;
 }
@@ -402,7 +407,7 @@ mon_regi_memcached(pid_t pid, char *addr)
  * return unregister success 0, fail -1
  */
 int 
-mon_unregi_memcached(pid_t pid, char *addr)
+mon_unregi_memcached(pid_t pid, char *address)
 {
     memcached_info_t *tmp_mc_info = NULL;
 
@@ -410,8 +415,8 @@ mon_unregi_memcached(pid_t pid, char *addr)
      * if pid is -1
      * then don't know pid because deleted pid file
      */
-    if (addr == NULL || pid == 0 || pid == 1) {
-        PRINT_LOG_NOTI("Invalid pid (%d), or ip:port address (%s)\n", pid, addr ? addr : "NULL");
+    if (address == NULL || pid == 0 || pid == 1) {
+        PRINT_LOG_NOTI("Invalid pid (%d), or ip:port address (%s)\n", pid, address ? address : "NULL");
         return -1;
     }
 
@@ -419,12 +424,12 @@ mon_unregi_memcached(pid_t pid, char *addr)
 
     while (tmp_mc_info != NULL) {
         if (pid == -1) {
-            if (strcmp(addr, tmp_mc_info->addr) == 0) {
+            if (strcmp(address, tmp_mc_info->address) == 0) {
                 break;
             }
         } else {
             if ((pid == tmp_mc_info->pid) &&
-                (strcmp(addr, tmp_mc_info->addr) == 0)) {
+                (strcmp(address, tmp_mc_info->address) == 0)) {
                 break;
             }
         }
@@ -449,7 +454,7 @@ mon_unregi_memcached(pid_t pid, char *addr)
              * case : user mistake - delete pid file
              * don't unregister
              */
-            PRINT_LOG_NOTI("Memcached process exists. Do not unregister. : (%d, %s)\n", pid, addr);
+            PRINT_LOG_NOTI("Memcached process exists. Do not unregister. : (%d, %s)\n", pid, address);
             return -1;
         }
         else {
@@ -458,13 +463,13 @@ mon_unregi_memcached(pid_t pid, char *addr)
              * m_list[i] is invalid info
              * nothing todo here. invalid info unregister
              */
-            PRINT_LOG_NOTI("Unregister invalid previous info. Stop monitoring. : (%d, %s)\n", tmp_mc_info->pid, tmp_mc_info->addr);
+            PRINT_LOG_NOTI("Unregister invalid previous info. Stop monitoring. : (%d, %s)\n", tmp_mc_info->pid, tmp_mc_info->address);
         }
     }
     else {
         PRINT_LOG_NOTI("Unregister memcached%snode. Stop monitoring. : (%d, %s)\n",
-                       tmp_mc_info->node_type == REP_MEMC_NODE ? " repl " : " ",
-                       tmp_mc_info->pid, tmp_mc_info->addr);
+                       tmp_mc_info->mapping_info->node_type == REP_MEMC_NODE ? " repl " : " ",
+                       tmp_mc_info->pid, tmp_mc_info->address);
     }
 
     /* unregister */
@@ -489,7 +494,6 @@ exist_pid_file_register()
     char            *address = NULL;
     pid_t           pid;
     char            full_path[PATH_LEN] = { 0 };
-    int             node_type = 0;
 
     if ((dp = opendir(pid_path)) == NULL) {
         PRINT_LOG_ERR("Can't open pid file directory. opendir");
@@ -528,22 +532,7 @@ exist_pid_file_register()
             }
 
             PRINT_LOG_NOTI("Found the existing pid file : %s (pid : %d, addr : %s)\n", dirp->d_name, pid, address);
-
-            if (mon_regi_memcached(pid, address) < 0) {
-                /* check exist znode */
-                node_type = zk_get_memc_node_type(address);
-                if (zk_check_exist(address, node_type) == 1) {
-                    PRINT_LOG_NOTI("Found the invalid existing znode : (pid : %d, addr : %s)\n", pid, address);
-                    free(address);
-                    closedir(dp);
-
-                    return -1;
-                } else {
-                    free(address);
-                    continue;
-                }
-            }
-
+            mon_regi_memcached(pid, address);
             free(address);
         }
     }
@@ -574,16 +563,16 @@ memcached_mon(void *arg)
                 i++;
                 /* print monitoring memcached list for debug */
                 PRINT_LOG_INFO("=== Checking memcached process (%d/%d) - pid : %d - addr : %s",
-                               i, m_count, tmp_mc_info->pid, tmp_mc_info->addr);
+                               i, m_count, tmp_mc_info->pid, tmp_mc_info->address);
 
                 /* check process. use kill */
                 if (kill(tmp_mc_info->pid, 0) != 0) {
                     PRINT_LOG_INFO(" ... NOK\n");
                     PRINT_LOG_NOTI("Memcached process does not exist. It may abnormally terminate. : (%d, %s)\n",
-                                   tmp_mc_info->pid, tmp_mc_info->addr);
+                                   tmp_mc_info->pid, tmp_mc_info->address);
 
                     /* delete znode */
-                    rc = zk_rm_znode(tmp_mc_info->addr, tmp_mc_info->node_type);
+                    rc = zk_rm_znode(tmp_mc_info->mapping_info);
                     if (rc == 0) {
                         PRINT_LOG_NOTI("Znode deletion success.\n");
                     } else {
@@ -595,7 +584,7 @@ memcached_mon(void *arg)
                     }
 
                     /* delete pid file */
-                    snprintf(remove_path, PATH_LEN, "%s/%s.%s", pid_path, file_prefix, tmp_mc_info->addr);
+                    snprintf(remove_path, PATH_LEN, "%s/%s.%s", pid_path, file_prefix, tmp_mc_info->address);
                     if (remove(remove_path) != 0) {
                         /* 
                          * if it is case that don't exist pid file, but memcached process exist
@@ -605,8 +594,8 @@ memcached_mon(void *arg)
                         PRINT_LOG_ERR("PID file remove error. Maybe does not exist or already removed.");
                     }
                     PRINT_LOG_NOTI("Unregister memcached%snode. Stop monitoring. : (%d, %s)\n",
-                                   tmp_mc_info->node_type == REP_MEMC_NODE ? " repl " : " ",
-                                   tmp_mc_info->pid, tmp_mc_info->addr);
+                                   tmp_mc_info->mapping_info->node_type == REP_MEMC_NODE ? " repl " : " ",
+                                   tmp_mc_info->pid, tmp_mc_info->address);
                     memc_delete(tmp_mc_info);
                 }
                 else {
