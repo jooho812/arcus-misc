@@ -443,9 +443,6 @@ zk_rm_znode(mapping_info_t *mapping_info)
             rc = -1;
         }
     } while (0);
-     
-    if (mapping_info != NULL)
-        free(mapping_info);
 
     return rc;
 }
