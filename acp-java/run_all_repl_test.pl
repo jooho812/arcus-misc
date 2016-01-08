@@ -103,7 +103,6 @@ system($cmd);
   , "config-repl-torture_set_ins_getwithdelete.txt"
   , "config-repl-torture_btree_ins_maxelement.txt"
   , "config-repl-torture_list_ins_maxelement.txt"
-  , "config-repl-simple_set_1mb.txt"
   , "config-repl-list_bulk_ins.txt"
   , "config-repl-list_bulk_piped_ins.txt"
   , "config-repl-set_bulk_ins.txt"
@@ -121,6 +120,7 @@ system($cmd);
   , "config-repl-simple_del.txt"
   , "config-repl-simple_async_incr.txt"
   , "config-repl-simple_async_decr.txt"
+  , "config-repl-simple_set_1mb.txt"
 );
 
 # for partial test
