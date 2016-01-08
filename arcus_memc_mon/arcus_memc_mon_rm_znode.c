@@ -415,20 +415,29 @@ zk_rm_znode(mapping_info_t *mapping_info)
         if (mapping_info->node_type == REP_MEMC_NODE &&
             zk_rm_init_group_matched_node(mapping_info, &ops[0]) < 0)
             break;
+        else
+            op_count++;
 
         /*
          * find and delete cache_list znode
          * /arcus_repl/cache_list/{svc}/{group}^{M/S}^{ip:port-hostname}
          */
-        if (mapping_info->node_type == ORG_MEMC_NODE &&
-            zk_rm_init_cache_list(mapping_info, &ops[0]) < 0)
-            break;
-        else if (mapping_info->node_type == REP_MEMC_NODE &&
-                 zk_rm_init_cache_list(mapping_info, &ops[1]) < 0)
-            break;
+        switch (mapping_info->node_type) {
+            case ORG_MEMC_NODE :
+                if (zk_rm_init_cache_list(mapping_info, &ops[0]) < 0)
+                    break;
+                op_count++;
+                break;
+            case REP_MEMC_NODE :
+                if (zk_rm_init_cache_list(mapping_info, &ops[1]) < 0)
+                    break;
+                op_count++;
+                break;
+            default :
+                break;
+        }
 
-        op_count = mapping_info->node_type == REP_MEMC_NODE ? 2 : 1;
-        if ((rc = zoo_multi(zh, op_count, ops, results)) == ZOK) {
+        if (op_count > 0 && (rc = zoo_multi(zh, op_count, ops, results)) == ZOK) {
             if (mapping_info->node_type == REP_MEMC_NODE) {
                 PRINT_LOG_INFO("Delete cache server group znode : %s\n", ops[0].delete_op.path);
                 PRINT_LOG_INFO("Delete cache list znode : %s\n", ops[1].delete_op.path);
