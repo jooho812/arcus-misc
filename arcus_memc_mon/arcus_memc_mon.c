@@ -17,7 +17,7 @@
 #include <sys/stat.h>
 
 #include "arcus_memc_mon_logger.h"
-#include "arcus_memc_mon_rm_znode.h"
+#include "arcus_memc_mon_zk.h"
 
 #define DEFAULT_MEMC_NAME               "memcached"
 #define DEFAULT_MON_PERIOD_TIME   1000
