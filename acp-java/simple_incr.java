@@ -49,6 +49,8 @@ public class simple_incr implements client_profile {
 
     if (!cli.after_request(ok))
       return false;
+    if (!ok)
+      return true;
 
     // Incr 100 times.
     for (int i = 0; i < 100; i++) {
@@ -64,6 +66,8 @@ public class simple_incr implements client_profile {
       }
       if (!cli.after_request(true))
         return false;
+      if (result == 0L)
+        return true;
     }
 
     return true;

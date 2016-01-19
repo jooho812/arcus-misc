@@ -80,6 +80,8 @@ public class torture_btree_ins_del implements client_profile {
       }
       if (!cli.after_request(ok))
         return false;
+      if (!ok)
+        return true;
     }
 
     // Delete elements
@@ -96,6 +98,8 @@ public class torture_btree_ins_del implements client_profile {
       }
       if (!cli.after_request(ok))
         return false;
+      if (!ok)
+        return true;
     }
 
     return true;

@@ -61,6 +61,8 @@ public class tiny_btree implements client_profile {
     }
     if (!cli.after_request(ok))
       return false;
+    if (!ok)
+      return true;
 
     // Insert elements
     for (long bkey = base; bkey < base + 4; bkey++) {
@@ -79,6 +81,8 @@ public class tiny_btree implements client_profile {
       }
       if (!cli.after_request(ok))
         return false;
+      if (!ok)
+        return true;
     }
 
     return true;

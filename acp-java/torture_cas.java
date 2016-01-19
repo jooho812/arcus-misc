@@ -51,6 +51,8 @@ public class torture_cas implements client_profile {
     }
     if (!cli.after_request(ok))
       return false;
+    if (!ok)
+      return true;
 
     // Gets
     Future<CASValue<byte[]>> fcv = 
@@ -83,6 +85,7 @@ public class torture_cas implements client_profile {
       System.out.println("CAS returns an unexpected OK response." +
                          " id=" + cli.id + " key=" + key + 
                          " response=" + casr);
+      return true;
     }
 
     // CAS.  Use cas_num.  This time, CAS should succeed.

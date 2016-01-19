@@ -63,6 +63,8 @@ public class torture_set_ins_getwithdelete implements client_profile {
     }
     if (!cli.after_request(ok, false))
       return false;
+    if (!ok)
+      return true;
 
     // Insert elements
     for (long skey = base; skey < base + cli.conf.ins_element_size; skey++) {
@@ -87,6 +89,8 @@ public class torture_set_ins_getwithdelete implements client_profile {
       }
       if (!cli.after_request(ok, false))
         return false;
+      if (!ok)
+        return true;
     }
 
     // Delete elements

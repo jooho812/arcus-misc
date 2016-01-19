@@ -64,6 +64,8 @@ public class torture_btree_bytemaxbkeyrange implements client_profile {
     }
     if (!cli.after_request(ok))
       return false;
+    if (!ok)
+      return true;
 
     // Set maxbkeyrange.  BopCreate does not support maxbkeyrange, so do
     // a separate SetAttr.
@@ -79,6 +81,8 @@ public class torture_btree_bytemaxbkeyrange implements client_profile {
     }
     if (!cli.after_request(ok))
       return false;
+    if (!ok)
+      return true;
 
     // Insert elements
     for (long bkey = base; bkey < base + 10000; bkey++) {
@@ -100,6 +104,8 @@ public class torture_btree_bytemaxbkeyrange implements client_profile {
       }
       if (!cli.after_request(ok))
         return false;
+      if (!ok)
+        return true;
     }
 
     return true;

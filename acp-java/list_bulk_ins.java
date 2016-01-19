@@ -102,6 +102,8 @@ public class list_bulk_ins implements client_profile {
 
       if (!cli.after_request(true))
         return false;
+      if (!ok)
+        return true;
     }
 
     return true;

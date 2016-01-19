@@ -62,6 +62,8 @@ public class torture_list_ins_maxelement implements client_profile {
     }
     if (!cli.after_request(ok))
       return false;
+    if (!ok)
+      return true;
 
     // Insert elements
     for (long lkey = base; lkey < base + cli.conf.ins_element_size; lkey++) {
@@ -87,6 +89,8 @@ public class torture_list_ins_maxelement implements client_profile {
       }
       if (!cli.after_request(ok))
         return false;
+      if (!ok)
+        return true;
     }
 
     return true;

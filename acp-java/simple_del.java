@@ -46,6 +46,8 @@ public class simple_del implements client_profile {
     boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
     if (!cli.after_request(ok))
       return false;
+    if (!ok)
+      return true;
 
     // DELETE
     if (!cli.before_request())

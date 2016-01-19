@@ -60,6 +60,8 @@ public class simple_get_bulk implements client_profile {
       }
       if (!cli.after_request(ok))
         return false;
+      if (!ok)
+        return true;
     }
 
     // getBulk

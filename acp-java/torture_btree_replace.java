@@ -61,6 +61,8 @@ public class torture_btree_replace implements client_profile {
     }
     if (!cli.after_request(ok))
       return false;
+    if (!ok)
+      return true;
 
     // Insert elements
     for (long bkey = base; bkey < base + 4000; bkey++) {
@@ -79,6 +81,8 @@ public class torture_btree_replace implements client_profile {
       }
       if (!cli.after_request(ok))
         return false;
+      if (!ok)
+        return true;
     }
 
     // Update elements
@@ -96,6 +100,8 @@ public class torture_btree_replace implements client_profile {
       }
       if (!cli.after_request(ok))
         return false;
+      if (!ok)
+        return true;
     }
 
     // Upsert elements
@@ -113,6 +119,8 @@ public class torture_btree_replace implements client_profile {
       }
       if (!cli.after_request(ok))
         return false;
+      if (!ok)
+        return true;
     }
 
     if (true)
@@ -133,6 +141,8 @@ public class torture_btree_replace implements client_profile {
       //}
       if (!cli.after_request(true))
         return false;
+      if (!ok)
+        return true;
     }
 
     // Decr elements
@@ -150,6 +160,8 @@ public class torture_btree_replace implements client_profile {
       //}
       if (!cli.after_request(true))
         return false;
+      if (!ok)
+        return true;
     }
 
     return true;

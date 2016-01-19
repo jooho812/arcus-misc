@@ -62,6 +62,8 @@ public class torture_list_ins_bulkdel implements client_profile {
     }
     if (!cli.after_request(ok, false))
       return false;
+    if (!ok)
+      return true;
 
     // Insert elements
     for (long lkey = base; lkey < base + cli.conf.ins_element_size; lkey++) {
@@ -87,6 +89,8 @@ public class torture_list_ins_bulkdel implements client_profile {
       }
       if (!cli.after_request(ok, false))
         return false;
+      if (!ok)
+        return true;
     }
 
     // Delete elements

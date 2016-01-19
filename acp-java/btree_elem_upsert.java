@@ -59,6 +59,9 @@ public class btree_elem_upsert implements client_profile {
     if (!cli.after_request(ok))
       return false;
 
+    if (!ok)
+      return true;
+
     // Insert elements
     long base = 0;
     for (long bkey = base; bkey < base + 100; bkey++) {
@@ -77,6 +80,9 @@ public class btree_elem_upsert implements client_profile {
       }
       if (!cli.after_request(ok))
         return false;
+
+      if (!ok)
+        return true;
     }
 
     return true;

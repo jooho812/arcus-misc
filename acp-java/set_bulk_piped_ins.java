@@ -76,6 +76,8 @@ public class set_bulk_piped_ins implements client_profile {
     }
     if (!cli.after_request(ok))
       return false;
+    if (!ok)
+      return true;
 
     // SopInsert Bulk (Piped)
     {

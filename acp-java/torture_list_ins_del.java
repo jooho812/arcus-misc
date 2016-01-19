@@ -62,6 +62,8 @@ public class torture_list_ins_del implements client_profile {
     }
     if (!cli.after_request(ok))
       return false;
+    if (!ok)
+      return true;
 
     // Insert elements
     for (long lkey = base; lkey < base + 4000; lkey++) {
@@ -87,6 +89,8 @@ public class torture_list_ins_del implements client_profile {
       }
       if (!cli.after_request(ok))
         return false;
+      if (!ok)
+        return true;
     }
 
     // Delete elements
@@ -108,6 +112,8 @@ public class torture_list_ins_del implements client_profile {
         index = -1;
       if (!cli.after_request(ok))
         return false;
+      if (!ok)
+        return true;
     }
 
     return true;

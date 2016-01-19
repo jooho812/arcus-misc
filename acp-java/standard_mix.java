@@ -97,6 +97,8 @@ public class standard_mix implements client_profile {
     }
     if (!cli.after_request(ok))
       return false;
+    if (!ok)
+      return true;
 
     // Insert a number of btree element
     cli.bks.reset();
@@ -117,6 +119,8 @@ public class standard_mix implements client_profile {
       }
       if (!cli.after_request(ok))
         return false;
+      if (!ok)
+        return true;
     }
 
     // Update
@@ -155,6 +159,8 @@ public class standard_mix implements client_profile {
     }
     if (!cli.after_request(ok))
       return false;
+    if (!ok)
+      return true;
     
     // Insert a number of elements.  Set has no element keys.
     for (int i = 0; i < 100; i++) {
@@ -171,6 +177,8 @@ public class standard_mix implements client_profile {
       }
       if (!cli.after_request(ok))
         return false;
+      if (!ok)
+        return true;
     }
 
     // Get/delete
@@ -205,6 +213,8 @@ public class standard_mix implements client_profile {
     }
     if (!cli.after_request(ok))
       return false;
+    if (!ok)
+      return true;
 
     // Insert a number of elements.  Push at the head.
     for (int i = 0; i < 100; i++) {
@@ -221,6 +231,8 @@ public class standard_mix implements client_profile {
       }
       if (!cli.after_request(ok))
         return false;
+      if (!ok)
+        return true;
     }
 
     // Get/delete
@@ -251,6 +263,8 @@ public class standard_mix implements client_profile {
       }
       if (!cli.after_request(ok))
         return false;
+      if (!ok)
+        return true;
     }
 
     // Incr/decr

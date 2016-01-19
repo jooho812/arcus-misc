@@ -48,6 +48,8 @@ public class simple_set implements client_profile {
       }
       if (!cli.after_request(ok))
         return false;
+      if (!ok)
+        return true;
     }
     return true;
   }

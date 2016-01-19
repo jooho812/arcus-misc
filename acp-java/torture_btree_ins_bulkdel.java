@@ -67,6 +67,8 @@ public class torture_btree_ins_bulkdel implements client_profile {
     }
     if (!cli.after_request(ok, false))
       return false;
+    if (!ok)
+      return true;
 
     // Insert elements
     for (long bkey = base; bkey < base + cli.conf.ins_element_size; bkey++) {
@@ -85,6 +87,8 @@ public class torture_btree_ins_bulkdel implements client_profile {
       }
       if (!cli.after_request(ok, false))
         return false;
+      if (!ok)
+        return true;
     }
 
     // Delete elements
@@ -111,6 +115,8 @@ public class torture_btree_ins_bulkdel implements client_profile {
         }
         if (!cli.after_request(ok))
           return false;
+        if (!ok)
+          return true;
     }
    
     return true;

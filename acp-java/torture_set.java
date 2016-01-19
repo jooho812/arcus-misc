@@ -62,6 +62,8 @@ public class torture_set implements client_profile {
     }
     if (!cli.after_request(ok))
       return false;
+    if (!ok)
+      return true;
 
     // Insert elements
     for (long skey = base; skey < base + 10000; skey++) {
@@ -87,6 +89,8 @@ public class torture_set implements client_profile {
       }
       if (!cli.after_request(ok))
         return false;
+      if (!ok)
+        return true;
     }
 
     return true;

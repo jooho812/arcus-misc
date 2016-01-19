@@ -51,6 +51,8 @@ public class simple_prepend implements client_profile {
     }
     if (!cli.after_request(ok))
       return false;
+    if (!ok)
+      return true;
 
     // Prepend 100 times.
     for (int i = 0; i < 100; i++) {
@@ -64,6 +66,8 @@ public class simple_prepend implements client_profile {
       }
       if (!cli.after_request(ok))
         return false;
+      if (!ok)
+        return true;
     }
 
     return true;
