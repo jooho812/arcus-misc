@@ -26,7 +26,8 @@ public class simple_set implements client_profile {
     } catch (Exception e) {
       System.out.printf("client_profile exception. id=%d exception=%s\n", 
                         cli.id, e.toString());
-      //e.printStackTrace();
+      if (cli.conf.print_stack_trace)
+        e.printStackTrace();
       //System.exit(0);
     }
     return true;

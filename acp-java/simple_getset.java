@@ -29,7 +29,8 @@ public class simple_getset implements client_profile {
       System.out.printf("client_profile exception. id=%d exception=%s\n", 
                         cli.id, e.toString());
       */
-      //e.printStackTrace();
+      if (cli.conf.print_stack_trace)
+        e.printStackTrace();
       //System.exit(0);
     }
     return true;
