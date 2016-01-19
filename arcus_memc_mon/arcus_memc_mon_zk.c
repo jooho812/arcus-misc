@@ -491,11 +491,12 @@ zk_rm_znode(mapping_info_t *mapping_info)
          * find matched znode
          * delete matched znode
          */
-        if (mapping_info->node_type == REP_MEMC_NODE &&
-            zk_rm_init_group_matched_node(mapping_info, &ops[op_count]) < 0)
-            break;
-        else
-            op_count++;
+        if (mapping_info->node_type == REP_MEMC_NODE) {
+            if (zk_rm_init_group_matched_node(mapping_info, &ops[op_count]) < 0)
+                break;
+            else
+                op_count++;
+        }
 
         /*
          * find and delete cache_list znode
