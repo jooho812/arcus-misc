@@ -69,7 +69,8 @@ print CONF
   "pool_size=10\n" .
   "pool_use_random=false\n" .
   "client_timeout=5000\n" .
-  "client_exptime=0\n";
+  "client_exptime=0\n" .
+  "print_stack_trace=0\n";
 close CONF;
 
 $cmd = "perl config_file_generator.pl tmp-default-config.txt basic_repl_test_description.txt";
