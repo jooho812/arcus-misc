@@ -23,12 +23,11 @@
 #define SLAVE_NODE  0
 
 zhandle_t   *zh = NULL;
-char        *zk_esemble = DEFAULT_ZK_ESEMBLE;
+char        *zk_ensemble = DEFAULT_ZK_ESEMBLE;
 int         zk_session_timeout = ZK_DEFAULT_SESSION_TIMEOUT; /* msec */
 clientid_t  myid;
 
 int         connected = 0;
-int         expired = 0;
 
 static int  use_syslog = 0;
 
@@ -45,9 +44,13 @@ const char  *zk_repl_group_path  = "cache_server_group";
 #define ZK_ERR_LOG(rc, path) \
         PRINT_LOG_NOTI("Zookeeper error. zpath=%s, error=%d(%s), %s:%d\n", path, rc, zerror(rc), __FILE__, __LINE__)
 
+/*
+ * return success 0, fail -1
+ */
 void
 zk_handle_watcher(zhandle_t *wzh, int type, int state, const char *path, void *context)
 {
+#define ZK_EXPIRED_EVENT_LOOP 5
     if (type == ZOO_SESSION_EVENT) {
         if (state == ZOO_CONNECTED_STATE) {
             const clientid_t *id = zoo_client_id(wzh);
@@ -56,15 +59,29 @@ zk_handle_watcher(zhandle_t *wzh, int type, int state, const char *path, void *c
                 myid = *id;
             }
             connected = 1;
-
         } else if (state == ZOO_CONNECTING_STATE) {
             connected = 0;
         } else if (state == ZOO_EXPIRED_SESSION_STATE) {
+            int i;
             connected = 0;
 
+            PRINT_LOG_INFO("Zookeeper session expired. Reinit zookeeper\n");
             if (zh)
                 zookeeper_close(zh);
-            zh = zookeeper_init(zk_esemble, zk_handle_watcher, zk_session_timeout, &myid, 0, 0);
+
+            for (i = 0; i < ZK_EXPIRED_EVENT_LOOP; i++) {
+                zh = zookeeper_init(zk_ensemble, zk_handle_watcher, zk_session_timeout, &myid, 0, 0);
+
+                if (zh) {
+                    break;
+                } else {
+                    PRINT_LOG_ERR("Zookeeper session reinit error (retry : %d). zookeeper_init", i);
+                    continue;
+                }
+            }
+
+            while (connected == 0)
+                usleep(1);
         }
     } 
 }
@@ -76,7 +93,12 @@ zk_arcus_mon_init(char *zk, char *proc_name, int sys_log)
     zoo_forward_logs_to_syslog(proc_name, use_syslog);
 
     zoo_set_debug_level(ZOO_LOG_LEVEL_INFO);
-    zh = zookeeper_init(zk == NULL ? zk_esemble : zk, zk_handle_watcher, zk_session_timeout, &myid, 0, 0);
+    zh = zookeeper_init(zk == NULL ? zk_ensemble : zk, zk_handle_watcher, zk_session_timeout, &myid, 0, 0);
+
+    if (!zh) {
+        PRINT_LOG_ERR("Zookeeper init error. zookeeper_init");
+        return -1;
+    }
 
     /*
      * zookeeper_init is asynchronous
@@ -84,11 +106,6 @@ zk_arcus_mon_init(char *zk, char *proc_name, int sys_log)
      */
     while (connected == 0)
         usleep(1);
-
-    if (!zh) {
-        PRINT_LOG_ERR("Zookeeper init error. zookeeper_init");
-        return -1;
-    }
 
     return 0;
 }
@@ -104,7 +121,7 @@ zk_arcus_mon_free()
  * return success 0, fail -1
  */
 int
-get_host(char *address, char *host_name)
+get_hostname(char *address, char *host_name)
 {
     in_addr_t            in_addr;
     struct hostent       *host;
@@ -112,34 +129,62 @@ get_host(char *address, char *host_name)
 
     addr_buf = strdup(address);
     if (addr_buf == NULL) {
-        PRINT_LOG_ERR("address buffer allocation error to get host name. strdup");
+        PRINT_LOG_ERR("Buffer allocation error to parse address by strdup()");
         return -1;
     }
 
     ip = strtok(addr_buf, ":");
     if (ip == NULL) {
-        PRINT_LOG_NOTI("The address to get host name is not ip:port format.\n");
+        PRINT_LOG_ERR("Invalid address format(ip:port) : %s", address);
         free(addr_buf);
 
         return -1;
     }
 
     in_addr = inet_addr(ip);
-    host = gethostbyaddr(&in_addr, sizeof(in_addr), AF_INET);
-    if (host == NULL) {
-        if (strcmp(getenv("ARCUS_CACHE_PUBLIC_IP"), ip) == 0) {
-            in_addr = inet_addr("127.0.0.1");
-            host = gethostbyaddr(&in_addr, sizeof(in_addr), AF_INET);
+    if (strcmp(getenv("ARCUS_CACHE_PUBLIC_IP"), ip) == 0) {
+        int sock;
+        socklen_t addr_len = 16;
+        struct sockaddr_in zoo_addr, myaddr;
 
-            strcpy(host_name, host->h_name);
-        } else if (gethostname(host_name, 36) < 0) {
-            PRINT_LOG_ERR("host name get error. gethostbyaddr");
+        zookeeper_get_connected_host(zh, (struct sockaddr *)&zoo_addr, &addr_len);
+        if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP)) == -1) {
+            PRINT_LOG_ERR("Can't create socket to get host name by socket()");
             free(addr_buf);
 
             return -1;
         }
+
+        if (connect(sock, (struct sockaddr*)&zoo_addr, addr_len) != 0) {
+            PRINT_LOG_ERR("Can't connect zookeeper to get host name by connect()");
+            free(addr_buf);
+
+            return -1;
+        }
+
+        if (getsockname(sock, (struct sockaddr*)&myaddr, &addr_len)) {
+            PRINT_LOG_ERR("Can't get Local IP address to get host name by getsockname()");
+            free (addr_buf);
+            close(sock);
+
+            return -1;
+        }
+        close(sock);
+
+        host = gethostbyaddr((char*)&myaddr.sin_addr.s_addr, sizeof(myaddr.sin_addr.s_addr), AF_INET);
     } else {
+        host = gethostbyaddr(&in_addr, sizeof(in_addr), AF_INET);
+    }
+
+    if (host) {
         strcpy(host_name, host->h_name);
+    } else {
+        if (gethostname(host_name, 36) < 0) {
+            PRINT_LOG_ERR("Can't get host name by gethostname()");
+            free(addr_buf);
+
+            return -1;
+        }
     }
     free(addr_buf);
 
@@ -314,8 +359,8 @@ zk_get_node_mapping_info(char *address)
     }
 
     /* make cache list path */ 
-    if (get_host(address, host_name) < 0) {
-        PRINT_LOG_ERR("Can't find hostnamen");
+    if (get_hostname(address, host_name) < 0) {
+        PRINT_LOG_ERR("Cannot get host name by address : %s", address);
         free(mapping_info);
 
         return NULL;
@@ -363,8 +408,12 @@ zk_rm_init_group_matched_node(mapping_info_t *mapping_info, zoo_op_t *op)
         return -1;
     }
 
-    if (mapping_info->ephemeralOwner != stat.ephemeralOwner)
+    if (mapping_info->ephemeralOwner != stat.ephemeralOwner) {
+        PRINT_LOG_NOTI("Don't have auth of %s znode to remove. Unmatch ephemeralOwner (own : %lld - znode : %ld",
+                        mapping_info->group_list_path, mapping_info->ephemeralOwner, stat.ephemeralOwner);
+
         return -1;
+    }
 
     zoo_delete_op_init(op, mapping_info->group_list_path, -1);
 
@@ -465,8 +514,11 @@ zk_rm_init_cache_list(mapping_info_t *mapping_info, zoo_op_t *op)
         return -1;
     }
 
-    if (mapping_info->ephemeralOwner != stat.ephemeralOwner)
+    if (mapping_info->ephemeralOwner != stat.ephemeralOwner) {
+        PRINT_LOG_NOTI("Don't have auth of %s znode to remove. Unmatch ephemeralOwner (own : %lld - znode : %ld",
+                        mapping_info->cache_list_path, mapping_info->ephemeralOwner, stat.ephemeralOwner);
         return -1;
+    }
 
     zoo_delete_op_init(op, mapping_info->cache_list_path, -1);
 
@@ -503,10 +555,10 @@ zk_rm_znode(mapping_info_t *mapping_info)
          * /arcus/cache_list/{svc}/{ip:port-hostname}
          * /arcus_repl/cache_list/{svc}/{group}^{M/S}^{ip:port-hostname}
          */
-            if (zk_rm_init_cache_list(mapping_info, &ops[op_count]) < 0)
-                break;
-            else
-                op_count++;
+        if (zk_rm_init_cache_list(mapping_info, &ops[op_count]) < 0)
+            break;
+        else
+            op_count++;
 
         if (op_count > 0 && (rc = zoo_multi(zh, op_count, ops, results)) == ZOK) {
             if (mapping_info->node_type == REP_MEMC_NODE) {

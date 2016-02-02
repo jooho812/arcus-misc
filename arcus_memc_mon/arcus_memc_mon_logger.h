@@ -1,9 +1,9 @@
 #ifndef ARCUS_MEMC_MON_LOGGER_H
 #define ARCUS_MEMC_MON_LOGGER_H
 
-#define PRINT_LOG_ERR(str)                                                  \
-        print_log (use_syslog, ARCUS_MON_LOG_ERR, "%s - %s(%d) (%s : %d)\n",    \
-                   str, strerror(errno), errno, __FILE__, __LINE__)
+#define PRINT_LOG_ERR(fmt, args...)                                                  \
+        print_log (use_syslog, ARCUS_MON_LOG_ERR, fmt" - %s(%d) (%s : %d)\n",    \
+                   ##args, strerror(errno), errno, __FILE__, __LINE__)
 
 #define PRINT_LOG_NOTI(fmt, args...)                              \
         print_log (use_syslog, ARCUS_MON_LOG_NOTICE, fmt, ##args)

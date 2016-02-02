@@ -55,7 +55,7 @@ pthread_t          m_mon_tid;
 int                inoti_fd, watch_fd; /* inotify variable */
 
 static int         use_syslog = 0;
-static char        *zk_esemble = NULL;
+static char        *zk_ensemble = NULL;
 int                stop_mon = 0;
 int                mon_period_time = DEFAULT_MON_PERIOD_TIME; /* msec */
 
@@ -712,7 +712,7 @@ arcus_mon_init(char *proc_name)
      * zookeeper init
      * for delete znode of abnormal shutdown memcached node 
      */
-    if (zk_arcus_mon_init(zk_esemble, proc_name, use_syslog) < 0) {
+    if (zk_arcus_mon_init(zk_ensemble, proc_name, use_syslog) < 0) {
         inotify_rm_watch(inoti_fd, watch_fd);
         close(inoti_fd);
         return -1;
@@ -805,7 +805,7 @@ main(int argc, char *argv[])
     while ((opt = getopt(argc, argv, "z:p:t:XL:h?")) != EOF) {
         switch (opt) {
             case 'z':
-                zk_esemble = optarg;
+                zk_ensemble = optarg;
                 break;
             case 'p':
                 file_prefix = optarg;
