@@ -30,7 +30,8 @@ public class simple_cas implements client_profile {
     } catch (Exception e) {
       System.out.printf("client_profile exception. id=%d exception=%s\n",
                         cli.id, e.toString());
-      e.printStackTrace();
+      if (cli.conf.print_stack_trace)
+        e.printStackTrace();
     }
     return true;
   }
@@ -51,8 +52,12 @@ public class simple_cas implements client_profile {
     }
     if (!cli.after_request(ok))
       return false;
+    if (!ok)
+      return true;
 
     // Gets
+    if (!cli.before_request())
+      return false;
     Future<CASValue<byte[]>> fcv =
       cli.next_ac.asyncGets(key, raw_transcoder.raw_tc);
     CASValue<byte[]> casv = fcv.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
@@ -62,14 +67,19 @@ public class simple_cas implements client_profile {
     }
     if (!cli.after_request(ok))
       return false;
+    if (!ok)
+      return true;
     byte[] get_val = casv.getValue();
     long cas_num = casv.getCas();
     if (!Arrays.equals(val, get_val)) {
       System.out.printf("gets value does not match the original value." +
                         " id=%d key=%s\n", cli.id, key);
+      return true;
     }
 
     // CAS
+    if (!cli.before_request())
+      return false;
     val = cli.vset.get_value();
     CASResponse fcr =
       cli.next_ac.cas(key, cas_num+1, val, raw_transcoder.raw_tc);
@@ -77,15 +87,21 @@ public class simple_cas implements client_profile {
       System.out.println("CAS returns an unexpected OK response." +
                          " id=" + cli.id + " key=" + key);
     }
-
-    // Cas
-    fcr = cli.next_ac.cas(key, cas_num, val, raw_transcoder.raw_tc);
     if (!cli.after_request(ok))
       return false;
+    if (fcr == null)
+      return true;
+
+    // Cas
+    if (!cli.before_request())
+      return false;
+    fcr = cli.next_ac.cas(key, cas_num, val, raw_transcoder.raw_tc);
     if (fcr == null) {
       System.out.println("CAS returns an unexpected non-OK response." +
                          " id=" + cli.id + " key=" + key);
     }
+    if (!cli.after_request(ok))
+      return false;
 
     return true;
   }

@@ -32,7 +32,8 @@ public class torture_btree_ins_maxelement implements client_profile {
     } catch (Exception e) {
       System.out.printf("client_profile exception. id=%d exception=%s\n", 
                         cli.id, e.toString());
-      e.printStackTrace();
+      if (cli.conf.print_stack_trace)
+        e.printStackTrace();
     }
     return true;
   }
@@ -67,6 +68,8 @@ public class torture_btree_ins_maxelement implements client_profile {
     }
     if (!cli.after_request(ok, false))
       return false;
+    if (!ok)
+      return true;
 
     // Insert elements
     for (long bkey = base; bkey < base + cli.conf.ins_element_size; bkey++) {
@@ -85,6 +88,8 @@ public class torture_btree_ins_maxelement implements client_profile {
       }
       if (!cli.after_request(ok))
         return false;
+      if (!ok)
+        return true;
     }
 
     return true;

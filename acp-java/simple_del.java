@@ -28,7 +28,8 @@ public class simple_del implements client_profile {
     } catch (Exception e) {
       System.out.printf("client_profile exception. id=%d exception=%s\n",
                         cli.id, e.toString());
-      e.printStackTrace();
+      if (cli.conf.print_stack_trace)
+        e.printStackTrace();
     }
     return true;
   }
@@ -46,6 +47,8 @@ public class simple_del implements client_profile {
     boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
     if (!cli.after_request(ok))
       return false;
+    if (!ok)
+      return true;
 
     // DELETE
     if (!cli.before_request())

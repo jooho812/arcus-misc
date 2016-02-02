@@ -30,7 +30,8 @@ public class torture_cas implements client_profile {
     } catch (Exception e) {
       System.out.printf("client_profile exception. id=%d exception=%s\n", 
                         cli.id, e.toString());
-      e.printStackTrace();
+      if (cli.conf.print_stack_trace)
+        e.printStackTrace();
     }
     return true;
   }
@@ -51,6 +52,8 @@ public class torture_cas implements client_profile {
     }
     if (!cli.after_request(ok))
       return false;
+    if (!ok)
+      return true;
 
     // Gets
     Future<CASValue<byte[]>> fcv = 
@@ -83,6 +86,7 @@ public class torture_cas implements client_profile {
       System.out.println("CAS returns an unexpected OK response." +
                          " id=" + cli.id + " key=" + key + 
                          " response=" + casr);
+      return true;
     }
 
     // CAS.  Use cas_num.  This time, CAS should succeed.

@@ -31,7 +31,8 @@ public class torture_list_ins_bulkdel implements client_profile {
     } catch (Exception e) {
       System.out.printf("client_profile exception. id=%d exception=%s\n", 
                         cli.id, e.toString());
-      e.printStackTrace();
+      if (cli.conf.print_stack_trace)
+        e.printStackTrace();
     }
     return true;
   }
@@ -62,6 +63,8 @@ public class torture_list_ins_bulkdel implements client_profile {
     }
     if (!cli.after_request(ok, false))
       return false;
+    if (!ok)
+      return true;
 
     // Insert elements
     for (long lkey = base; lkey < base + cli.conf.ins_element_size; lkey++) {
@@ -87,6 +90,8 @@ public class torture_list_ins_bulkdel implements client_profile {
       }
       if (!cli.after_request(ok, false))
         return false;
+      if (!ok)
+        return true;
     }
 
     // Delete elements

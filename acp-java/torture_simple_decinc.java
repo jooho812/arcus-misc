@@ -26,7 +26,8 @@ public class torture_simple_decinc implements client_profile {
     } catch (Exception e) {
       System.out.printf("client_profile exception. id=%d exception=%s\n", 
                         cli.id, e.toString());
-      e.printStackTrace();
+      if (cli.conf.print_stack_trace)
+        e.printStackTrace();
     }
     return true;
   }
@@ -49,6 +50,8 @@ public class torture_simple_decinc implements client_profile {
     }
     if (!cli.after_request(ok))
       return false;
+    if (!ok)
+      return true;
 
     // Decrement to 0
     if (!cli.before_request())
@@ -64,6 +67,8 @@ public class torture_simple_decinc implements client_profile {
     }
     if (!cli.after_request(ok))
       return false;
+    if (!ok)
+      return true;
 
     // Increment to cli.id+2
     if (!cli.before_request())
@@ -79,6 +84,8 @@ public class torture_simple_decinc implements client_profile {
     }
     if (!cli.after_request(ok))
       return false;
+    if (!ok)
+      return true;
 
     // Replace the value with a pattern
     if (!cli.before_request())

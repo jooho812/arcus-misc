@@ -33,7 +33,8 @@ public class torture_btree_decinc implements client_profile {
     } catch (Exception e) {
       System.out.printf("client_profile exception. id=%d exception=%s\n", 
                         cli.id, e.toString());
-      e.printStackTrace();
+      if (cli.conf.print_stack_trace)
+        e.printStackTrace();
     }
     return true;
   }
@@ -64,6 +65,8 @@ public class torture_btree_decinc implements client_profile {
     }
     if (!cli.after_request(ok))
       return false;
+    if (!ok)
+      return true;
 
     // Upsert elements
     for (long bkey = base; bkey < base + 4000; bkey++) {
@@ -82,6 +85,8 @@ public class torture_btree_decinc implements client_profile {
       }
       if (!cli.after_request(ok))
         return false;
+      if (!ok)
+        return true;
     }
 
     // Decr elements
@@ -114,6 +119,8 @@ public class torture_btree_decinc implements client_profile {
       }
       if (!cli.after_request(ok))
         return false;
+      if (!ok)
+        return true;
     }
 
     // Incr elements
@@ -132,6 +139,8 @@ public class torture_btree_decinc implements client_profile {
       }
       if (!cli.after_request(ok))
         return false;
+      if (!ok)
+        return true;
     }
 
     return true;
