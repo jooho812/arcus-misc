@@ -215,7 +215,7 @@ contains_proc_stat(pid_t pid, char *cmd)
  * return address (ip:port), if invalidate filename then NULL
  */
 char *
-validate_file_name_and_get_adress(char *file_name)
+validate_file_name_and_get_address(char *file_name)
 {
     char *file_name_buf = NULL;
     char *file_name_buf_last = NULL;
@@ -523,7 +523,7 @@ exist_pid_file_register()
             continue;
 
         if ((address =
-             validate_file_name_and_get_adress(dirp->d_name)) != NULL) {
+             validate_file_name_and_get_address(dirp->d_name)) != NULL) {
 
             if ((pid = get_pid(dirp->d_name)) <= 0) {
                 PRINT_LOG_NOTI("(%s) file does not exist or contains invalid pid.\n", dirp->d_name);
@@ -549,6 +549,7 @@ memcached_mon(void *arg)
     int  rc;
     int  m_count, i;
     memcached_info_t *tmp_mc_info = NULL;
+    memcached_info_t *next_mc_info = NULL;
 
     while (!stop_mon) {
 
@@ -596,13 +597,15 @@ memcached_mon(void *arg)
                     PRINT_LOG_NOTI("Unregister memcached%snode. Stop monitoring. : (%d, %s)\n",
                                    tmp_mc_info->mapping_info->node_type == REP_MEMC_NODE ? " repl " : " ",
                                    tmp_mc_info->pid, tmp_mc_info->address);
+                    next_mc_info = tmp_mc_info->next;
                     memc_delete(tmp_mc_info);
+                    tmp_mc_info = next_mc_info;
                 }
                 else {
                     PRINT_LOG_INFO(" ... OK\n");
+                    tmp_mc_info = tmp_mc_info->next;
                 }
 
-                tmp_mc_info = tmp_mc_info->next;
             }
         }
         pthread_mutex_unlock(&m_list.mutex);
@@ -651,7 +654,7 @@ inoti_event_handler(struct inotify_event *event)
 
     /* validated filename : <file_prefix>.ip:port */
     if ((address =
-         validate_file_name_and_get_adress(event->name)) == NULL)
+         validate_file_name_and_get_address(event->name)) == NULL)
         return -1;
 
     /*

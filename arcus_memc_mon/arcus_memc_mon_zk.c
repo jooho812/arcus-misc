@@ -409,7 +409,7 @@ zk_rm_init_group_matched_node(mapping_info_t *mapping_info, zoo_op_t *op)
     }
 
     if (mapping_info->ephemeralOwner != stat.ephemeralOwner) {
-        PRINT_LOG_NOTI("Don't have auth of %s znode to remove. Unmatch ephemeralOwner (own : %lld - znode : %ld",
+        PRINT_LOG_NOTI("Don't have auth of %s znode to remove. Mismatch ephemeralOwner (own : %lld - znode : %ld",
                         mapping_info->group_list_path, mapping_info->ephemeralOwner, stat.ephemeralOwner);
 
         return -1;
@@ -440,7 +440,7 @@ zk_rm_init_cache_list(mapping_info_t *mapping_info, zoo_op_t *op)
      */
     if (mapping_info->node_type == REP_MEMC_NODE) {
         /* get address and service code*/
-        char org[128];
+        char org[ZNODE_PATH_LEN];
         char *temp, *last_buf;
         char *svc, *address;
         
@@ -560,7 +560,7 @@ zk_rm_znode(mapping_info_t *mapping_info)
         else
             op_count++;
 
-        if (op_count > 0 && (rc = zoo_multi(zh, op_count, ops, results)) == ZOK) {
+        if ((rc = zoo_multi(zh, op_count, ops, results)) == ZOK) {
             if (mapping_info->node_type == REP_MEMC_NODE) {
                 PRINT_LOG_INFO("Delete cache server group znode : %s\n", ops[0].delete_op.path);
                 PRINT_LOG_INFO("Delete cache list znode : %s\n", ops[1].delete_op.path);
