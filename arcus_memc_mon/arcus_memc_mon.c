@@ -334,7 +334,7 @@ int
 mon_regi_memcached(pid_t pid, char *address)
 {
     mapping_info_t   *mapping_info;
-    memcached_info_t      *tmp_mc_info = NULL;
+    memcached_info_t *tmp_mc_info = NULL;
 
     /* if pid = 1 is init process */
     if (pid <= (pid_t)1 || address == NULL) {
@@ -391,8 +391,10 @@ mon_regi_memcached(pid_t pid, char *address)
     }
 
     /* register */
-    if (memc_insert(pid, address, mapping_info) != 0)
+    if (memc_insert(pid, address, mapping_info) != 0) {
+        free(mapping_info);
         return MON_REGI_ERR;
+    }
 
     PRINT_LOG_NOTI("Register memcached%snode. Start monitoring. : (%d, %s)\n",
                     mapping_info->node_type == REP_MEMC_NODE ? " repl " : " ",
