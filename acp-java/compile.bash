@@ -3,7 +3,7 @@
 DIR=`readlink -f $0`
 DIR=`dirname $DIR`
 if test -d "$DIR/../../arcus-java-client" ; then
-  JARFILE=$DIR/../../arcus-java-client/target/arcus-java-client-1.9.0.jar
+  JARFILE=$DIR/../../arcus-java-client/target/arcus-java-client-1.9.4.jar
 else
   if test -d "$DIR/../../java-memcached-client" ; then
     JARFILE=$DIR/../../java-memcached-client/target/arcus-client-1.6.3.0.jar
@@ -15,4 +15,4 @@ fi
 
 echo "Jar is at " $JARFILE
 
-javac -Xlint:deprecation -classpath $JARFILE *.java
+javac -Xlint:deprecation -classpath $JARFILE src/*.java
