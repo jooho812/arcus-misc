@@ -12,7 +12,7 @@ Run
 Modify run.bash according to your Java setup.  And use one of the config
 files as follows.
 
-    ./run.bash -config config-simple-decinc.txt
+    ./run.bash -config conf/config-simple-decinc.txt
 
 How it works
 ------------
