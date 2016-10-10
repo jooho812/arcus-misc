@@ -2,6 +2,7 @@
 /*
  * acp-java : Arcus Java Client Performance benchmark program
  * Copyright 2013-2014 NAVER Corp.
+ * Copyright 2014-2016 JaM2in Co., Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,6 +126,15 @@ class acp {
     else if (conf.client_profile.equals("torture_btree_exptime")) {
       profile = new torture_btree_exptime();
     }
+    else if (conf.client_profile.equals("torture_map")) {
+      profile = new torture_map();
+    }
+    else if (conf.client_profile.equals("torture_map_ins_del")) {
+      profile = new torture_map_ins_del();
+    }
+    else if (conf.client_profile.equals("torture_map_ins_getwithdelete")) {
+      profile = new torture_map_ins_getwithdelete();
+    }
     else if (conf.client_profile.equals("torture_set")) {
       profile = new torture_set();
     }
@@ -155,8 +165,17 @@ class acp {
     else if (conf.client_profile.equals("torture_btree_replace")) {
       profile = new torture_btree_replace();
     }
+    else if (conf.client_profile.equals("torture_map_replace")) {
+      profile = new torture_map_replace();
+    }
     else if (conf.client_profile.equals("torture_arcus_integration")) {
       profile = new torture_arcus_integration();
+    }
+    else if (conf.client_profile.equals("map_bulk_ins")) {
+      profile = new map_bulk_ins();
+    }
+    else if (conf.client_profile.equals("map_bulk_piped_ins")) {
+      profile = new map_bulk_piped_ins();
     }
     else if (conf.client_profile.equals("list_bulk_ins")) {
       profile = new list_bulk_ins();
