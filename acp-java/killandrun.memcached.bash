@@ -21,7 +21,12 @@ else
   kill_type="$3"
 fi
 
-DIR=`readlink -f $0`
+# Find os type. if system`s os is Mac OS X, we use greadlink.
+case "$OSTYPE" in
+  darwin*) DIR=`greadlink -f $0`;;
+  *) DIR=`readlink -f $0`;;
+esac
+
 DIR=`dirname $DIR`
 MEMC_DIR_NAME=arcus-memcached
 MEMC_DIR=$DIR/../../$MEMC_DIR_NAME
