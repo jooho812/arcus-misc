@@ -1,9 +1,13 @@
 
+# Find os type. if system`s os is Mac OS X, we use greadlink.
+case "$OSTYPE" in
+  darwin*) DIR=`greadlink -f $0`;;
+  *) DIR=`readlink -f $0`;;
+esac
 
-DIR=`readlink -f $0`
 DIR=`dirname $DIR`
 if test -d "$DIR/../../arcus-java-client" ; then
-  JARFILE=$DIR/../../arcus-java-client/target/arcus-java-client-1.9.0.jar
+  JARFILE=$DIR/../../arcus-java-client/target/arcus-java-client-1.9.5.jar
 else
   if test -d "$DIR/../../java-memcached-client" ; then
     JARFILE=$DIR/../../java-memcached-client/target/arcus-client-1.6.3.0.jar
