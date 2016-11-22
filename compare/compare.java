@@ -32,6 +32,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.Adler32;
 
+import java.lang.Runtime;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.InputStream;
+
 import net.spy.memcached.ArcusClient;
 import net.spy.memcached.CachedData;
 import net.spy.memcached.CASValue;
@@ -133,6 +138,8 @@ public class compare {
 
   HashMap<Key, Key> keymap = new HashMap<Key, Key>(10000000);
   List<myclient> server_list = new ArrayList<myclient>();
+  int master_idx = -1;
+
   mytc tc = new mytc();
 
   public compare() {
@@ -217,10 +224,28 @@ public class compare {
     //  throw new Exception("There are no keys.");
 
     // Make one client per server
-    if (args_server.size() < 2)
+    int server_count = args_server.size();
+    if (server_count < 2)
       throw new Exception("There are fewere than 2 servers.");
-    for (String addr : args_server) {
+    for (int i = 0; i < server_count; i++) {
+      String addr = args_server.get(i);
       String[] temp = addr.split(":");
+
+      String[] command = {"/bin/sh", "-c",
+                        "echo stats replication "
+                        + "| nc "+ temp[0] + " " + temp[1]
+                        + "| grep mode"};
+
+      String modeStat = shellCmd(command);
+      if (modeStat.contains("master")) {
+        master_idx = i;
+        if (i > 1) {
+            System.out.println("master have to get bigger index than 1");
+            System.exit(0);
+        } else
+            System.out.println("master exists");
+      }
+
       InetSocketAddress inet =
         new InetSocketAddress(temp[0], Integer.parseInt(temp[1]));
       List<InetSocketAddress> inet_list = new ArrayList<InetSocketAddress>();
@@ -237,6 +262,17 @@ public class compare {
     }
   }
 
+  String shellCmd(String[] command) throws Exception {
+    Runtime runtime = Runtime.getRuntime();
+    Process process = runtime.exec(command);
+    InputStream is = process.getInputStream();
+    InputStreamReader isr = new InputStreamReader(is);
+    BufferedReader br = new BufferedReader(isr);
+
+    String line = br.readLine();
+    return line;
+  }
+
   void cleanup() throws Exception {
     for (myclient cli : server_list) {
       cli.shutdown();
@@ -244,7 +280,7 @@ public class compare {
   }
 
   enum comp_result {
-    EQUAL, EXIST_DIFF, ATTR_DIFF, VAL_DIFF, EFLAG_DIFF, VAL_NULL, FETCH_ERROR,
+    EQUAL, ATTR_DIFF, VAL_DIFF, EFLAG_DIFF, VAL_NULL, FETCH_ERROR,
       MISSING_0, MISSING_1, MISSING_0_EXP, MISSING_1_EXP, CAS_DIFF,
   }
 
@@ -253,14 +289,14 @@ public class compare {
       if (a0 != null) {
         int exp0 = a0.getExpireTime();
         if (exp0 == -1 || exp0 == 0 || exp0 > expDiffLimit)
-          return comp_result.EXIST_DIFF;
+          return comp_result.MISSING_0;
         else
           return comp_result.MISSING_0_EXP;
       }
       if (a1 != null) {
         int exp1 = a1.getExpireTime();
         if (exp1 == -1 || exp1 == 0 || exp1 > expDiffLimit)
-          return comp_result.EXIST_DIFF;
+          return comp_result.MISSING_1;
         else
           return comp_result.MISSING_1_EXP;
       }
@@ -346,17 +382,21 @@ public class compare {
     comp_result curResult;
     CollectionAttributes v0_attr;
     CollectionAttributes vi_attr;
+    int v0_idx = 0;
 
     v0_attr = attrs.get(0);
-    for (int i = 1; i < server_count; i++) {
+
+    for (int i = 0; i < server_count; i++) {
       vi_attr = attrs.get(i);
       curResult = compareKeyExist(v0_attr, vi_attr);
       if (curResult != comp_result.EQUAL) {
-        if (totResult != comp_result.EXIST_DIFF)
+        if (totResult != comp_result.MISSING_0 &&
+            totResult != comp_result.MISSING_1)
           totResult = curResult;
       }
     }
-    if (totResult == comp_result.EXIST_DIFF) {
+
+    if (totResult == comp_result.MISSING_0 || totResult == comp_result.MISSING_1) {
       System.out.println("Attr exists on some servers but not others." + " key=" + key.str);
       for (int i = 0; i < server_count; i++) {
         if (attrs.get(i) == null) {
@@ -368,6 +408,7 @@ public class compare {
       }
       return totResult;
     }
+
     if (totResult != comp_result.EQUAL) {
       // comp_result.MISSING_0_EXP or comp_result.MISSING_1_EXP
       totResult = comp_result.EQUAL;
@@ -436,7 +477,7 @@ public class compare {
     }
     comp_result res = compareItemAttributes(key, attrs);
     if (res != comp_result.EQUAL) {
-      return res; // comp_result.EXIST_DIFF
+      return res; // comp_result.MISSING_0 or MISSING_1
     }
     if (null_count > 0) {
       return comp_result.EQUAL; // some will be expired
@@ -492,7 +533,7 @@ public class compare {
     }
     comp_result res = compareItemAttributes(key, attrs);
     if (res != comp_result.EQUAL) {
-      return res; // comp_result.EXIST_DIFF
+      return res; // comp_result.MISSING_0 or MISSING_1
     }
     if (null_count > 0) {
       return comp_result.EQUAL; // some will be expired
@@ -670,11 +711,13 @@ public class compare {
         boolean equal = true;
         do {
           if (v0_bkey.size() != vi_bkey.size()) {
-            System.out.println("Element count are different. key=" + key.str +
-                               "\nserver0=" + server_list.get(0).name +
-                               "  ecount0=" + v0_bkey.size() + " attr0=" + attrs.get(0) +
-                               "\nserveri=" + server_list.get(i).name +
-                               "  ecounti=" + vi_bkey.size() + " attri=" + attrs.get(i));
+            if (!args_quiet) {
+              System.out.println("Element count are different. key=" + key.str +
+                                 "\nserver0=" + server_list.get(0).name +
+                                 "  ecount0=" + v0_bkey.size() + " attr0=" + attrs.get(0) +
+                                 "\nserveri=" + server_list.get(i).name +
+                                 "  ecounti=" + vi_bkey.size() + " attri=" + attrs.get(i));
+            }
             equal = false; break;
           }
           if (v0_bkey.size() == 0) {
@@ -686,31 +729,41 @@ public class compare {
             Element<byte[]> v0_elem = v0.get(bk);
             Element<byte[]> vi_elem = vi.get(bk);
             if (vi_elem == null) {
-              System.out.println("bkey exists on some servers but not others." +
-                                 " key=" + key.str + " bkey=" + bk +
-                                 "\nserver0=" + server_list.get(0).name + " attr0=" + attrs.get(0) +
-                                 "\nserveri=" + server_list.get(i).name + " attri=" + attrs.get(i));
+              if (!args_quiet) {
+                System.out.println("bkey exists on some servers but not others." +
+                                   " key=" + key.str + " bkey=" + bk +
+                                   "\nserver0=" + server_list.get(0).name + " attr0=" + attrs.get(0) +
+                                   "\nserveri=" + server_list.get(i).name + " attri=" + attrs.get(i));
+              }
               equal = false; break;
             }
             equal = Arrays.equals(v0_elem.getValue(), vi_elem.getValue());
             if (!equal) {
-              System.out.println("Values are different." + " key=" + key.str + " bkey=" + bk +
-                                 "\nserver0=" + server_list.get(0).name + " attr0=" + attrs.get(0) +
-                                 "\nserveri=" + server_list.get(i).name + " attri=" + attrs.get(i));
+              if (!args_quiet) {
+                System.out.println("Values are different." + " key=" + key.str + " bkey=" + bk +
+                                   "\nserver0=" + server_list.get(0).name + " attr0=" + attrs.get(0) +
+                                   "\nserveri=" + server_list.get(i).name + " attri=" + attrs.get(i));
+              }
               byte[] val;
               val = v0_elem.getValue();
-              System.out.println("\nv0.length=" + val.length);
-              hexdump(val, val.length);
+              if (!args_quiet) {
+                System.out.println("\nv0.length=" + val.length);
+                hexdump(val, val.length);
+              }
               val = vi_elem.getValue();
-              System.out.println("\nvi.length=" + val.length);
-              hexdump(val, val.length);
+              if (!args_quiet) {
+                System.out.println("\nvi.length=" + val.length);
+                hexdump(val, val.length);
+              }
               break;
             }
             equal = Arrays.equals(v0_elem.getFlag(), vi_elem.getFlag());
             if (!equal) {
-              System.out.println("Eflags are different." + " key=" + key.str + " bkey=" + bk +
-                                 "\nserver0=" + server_list.get(0).name + " attr0=" + attrs.get(0) +
-                                 "\nserveri=" + server_list.get(i).name + " attri=" + attrs.get(i));
+              if (!args_quiet) {
+                System.out.println("Eflags are different." + " key=" + key.str + " bkey=" + bk +
+                                   "\nserver0=" + server_list.get(0).name + " attr0=" + attrs.get(0) +
+                                   "\nserveri=" + server_list.get(i).name + " attri=" + attrs.get(i));
+              }
               break;
             }
           }
@@ -751,7 +804,7 @@ public class compare {
     }
     comp_result res = compareItemAttributes(key, attrs);
     if (res != comp_result.EQUAL) {
-      return res; // comp_result.EXIST_DIFF
+      return res; // comp_result.MISSING_0 or MISSING_1
     }
     if (null_count > 0) {
       return comp_result.EQUAL; // some will be expired
@@ -789,9 +842,11 @@ public class compare {
         }
       } while(false);
       if (!equal) {
-        System.out.println("Set sizes are different." +
-                           " server0=" + server_list.get(0).name + " count=" + v0.size() +
-                           " serveri=" + server_list.get(i).name + " count=" + vi.size());
+        if (!args_quiet) {
+          System.out.println("Set sizes are different." +
+                             " server0=" + server_list.get(0).name + " count=" + v0.size() +
+                             " serveri=" + server_list.get(i).name + " count=" + vi.size());
+        }
         res = comp_result.VAL_DIFF;
       }
     }
@@ -827,7 +882,7 @@ public class compare {
     }
     comp_result res = compareItemAttributes(key, attrs);
     if (res != comp_result.EQUAL) {
-      return res; // comp_result.EXIST_DIFF
+      return res; // comp_result.MISSING_0 or MISSING_1
     }
     if (null_count > 0) {
       return comp_result.EQUAL; // some will be expired
@@ -853,9 +908,11 @@ public class compare {
         }
       } while(false);
       if (equal == false) {
-        System.out.println("Values are different." +
-                           " server0=" + server_list.get(0).name +
-                           " serveri=" + server_list.get(i).name);
+        if (!args_quiet) {
+          System.out.println("Values are different." +
+                             " server0=" + server_list.get(0).name +
+                             " serveri=" + server_list.get(i).name);
+        }
         res = comp_result.VAL_DIFF;
       }
     }
@@ -880,6 +937,8 @@ public class compare {
     int simple_cas = 0;
     int btree_equal = 0;
     int btree_exist = 0;
+    int btree_missing_0 = 0;
+    int btree_missing_1 = 0;
     int btree_attr = 0;
     int btree_eflag = 0;
     int btree_val = 0;
@@ -888,11 +947,15 @@ public class compare {
     int btree_bad = 0;
     int list_equal = 0;
     int list_exist = 0;
+    int list_missing_0 = 0;
+    int list_missing_1 = 0;
     int list_attr = 0;
     int list_val = 0;
     int list_bad = 0;
     int set_equal = 0;
     int set_exist = 0;
+    int set_missing_0 = 0;
+    int set_missing_1 = 0;
     int set_attr = 0;
     int set_val = 0;
     int set_bad = 0;
@@ -912,9 +975,6 @@ public class compare {
         switch (res) {
         case EQUAL:
           simple_equal++;
-          break;
-        case EXIST_DIFF:
-          simple_exist++;
           break;
         case ATTR_DIFF:
           simple_attr++;
@@ -938,6 +998,7 @@ public class compare {
           simple_cas++;
           break;
         }
+
         if (res != comp_result.EQUAL) {
           simple_bad++;
           if (!args_quiet)
@@ -950,9 +1011,6 @@ public class compare {
         case EQUAL:
           btree_equal++;
           break;
-        case EXIST_DIFF:
-          btree_exist++;
-          break;
         case ATTR_DIFF:
           btree_attr++;
           break;
@@ -964,6 +1022,12 @@ public class compare {
           break;
         case VAL_NULL:
           btree_val_null++;
+          break;
+        case MISSING_0:
+          btree_missing_0++;
+          break;
+        case MISSING_1:
+          btree_missing_1++;
           break;
         case FETCH_ERROR:
           btree_fetch_error++;
@@ -985,14 +1049,17 @@ public class compare {
         case EQUAL:
           list_equal++;
           break;
-        case EXIST_DIFF:
-          list_exist++;
-          break;
         case ATTR_DIFF:
           list_attr++;
           break;
         case VAL_DIFF:
           list_val++;
+          break;
+        case MISSING_0:
+          list_missing_0++;
+          break;
+        case MISSING_1:
+          list_missing_1++;
           break;
         }
         if (res != comp_result.EQUAL) {
@@ -1006,14 +1073,17 @@ public class compare {
         case EQUAL:
           set_equal++;
           break;
-        case EXIST_DIFF:
-          set_exist++;
-          break;
         case ATTR_DIFF:
           set_attr++;
           break;
         case VAL_DIFF:
           set_val++;
+          break;
+        case MISSING_0:
+          set_missing_0++;
+          break;
+        case MISSING_1:
+          set_missing_1++;
           break;
         }
         if (res != comp_result.EQUAL) {
@@ -1033,22 +1103,63 @@ public class compare {
     }
 
     boolean isSame = true;
+    boolean isDiff = false;
+    boolean isSubset = false;
     do {
       if (simple_bad > 0 || simple_exist > 0 ||
           simple_attr > 0 || simple_val > 0 || simple_cas > 0 ||
           simple_missing_0 > 0 || simple_missing_0_exp > 0 ||
           simple_missing_1 > 0 || simple_missing_1_exp > 0) {
+        if (master_idx == 0) {
+            if (simple_missing_1 == 0) {
+                isSubset = true;
+            }
+        } else if (master_idx == 1) {
+            if (simple_missing_0 == 0) {
+                isSubset = true;
+            }
+        }
         isSame = false; break;
       }
       if (btree_bad > 0 || btree_exist > 0 || btree_attr > 0 ||
           btree_eflag > 0 || btree_val > 0 ||
-          btree_val_null > 0 || btree_fetch_error > 0) {
+          btree_val_null > 0 || btree_fetch_error > 0 ||
+          btree_missing_0 > 0 || btree_missing_1 > 0) {
+        if (master_idx == 0) {
+            if (btree_missing_1 == 0) {
+                 isSubset = true;
+            }
+        } else if (master_idx == 1) {
+            if (btree_missing_0 == 0) {
+                isSubset = true;
+            }
+        }
         isSame = false; break;
       }
-      if (list_bad > 0 || list_exist > 0 || list_attr > 0 || list_val > 0) {
+      if (list_bad > 0 || list_exist > 0 || list_attr > 0 || list_val > 0 ||
+          list_missing_0 > 0 || list_missing_1 > 0) {
+        if (master_idx == 0) {
+            if (list_missing_1 == 0) {
+                isSubset = true;
+            }
+        } else if (master_idx == 1) {
+            if (list_missing_0 == 0) {
+                isSubset = true;
+            }
+        }
         isSame = false; break;
       }
-      if (set_bad > 0 || set_exist > 0 || set_attr > 0 || set_val > 0) {
+      if (set_bad > 0 || set_exist > 0 || set_attr > 0 || set_val > 0 ||
+          set_missing_0 > 0 || set_missing_1 > 0) {
+        if (master_idx == 0) {
+            if (set_missing_1 == 0) {
+                isSubset = true;
+            }
+        } else if (master_idx == 1) {
+            if (set_missing_0 == 0) {
+                isSubset = true;
+            }
+        }
         isSame = false; break;
       }
     } while(false);
@@ -1056,24 +1167,25 @@ public class compare {
     Date finishTime = new Date();
     if (isSame == true) {
       System.out.println(finishTime.toString() + " Finished comparison: SAME");
-    } else {
+    } else if (isSubset == true) {
+      System.out.println(finishTime.toString() + " Finished comparison: SUBSET");
+    }else {
       System.out.println(finishTime.toString() + " Finished comparison: DIFFERENT");
     }
     System.out.printf("SIMPLE ok=%d bad=%d missing=%d attr=%d value=%d cas=%d\n" +
                       "       missing_0=%d missing_0_expired=%d missing_1=%d missing_1_expired=%d\n",
-                      simple_equal, simple_bad, simple_exist, simple_attr, simple_val, simple_cas,
-                      simple_missing_0, simple_missing_0_exp, simple_missing_1, simple_missing_1_exp);
-    System.out.printf("BTREE  ok=%d bad=%d missing=%d attr=%d eflag=%d " +
-                              "value=%d value_null=%d fetch_error=%d\n",
-                      btree_equal, btree_bad, btree_exist, btree_attr,
-                      btree_eflag, btree_val, btree_val_null, btree_fetch_error);
+                      simple_equal, simple_bad, simple_missing_0 + simple_missing_1 , simple_attr, simple_val,
+                      simple_cas, simple_missing_0, simple_missing_0_exp, simple_missing_1, simple_missing_1_exp);
+    System.out.printf("BTREE  ok=%d bad=%d missing=%d attr=%d eflag=%d value=%d null=%d fetch_error=%d missing_0=%d missing_1=%d\n",
+                      btree_equal, btree_bad, btree_missing_0 + btree_missing_1, btree_attr,
+                      btree_eflag, btree_val, btree_val_null, btree_fetch_error, btree_missing_0, btree_missing_1);
     System.out.printf("       (bytearraybkey=%d expired_on_all=%d empty=%d)\n",
                       stats_btree_bytearraybkey, stats_btree_expired_on_all,
                       stats_btree_empty);
-    System.out.printf("LIST   ok=%d bad=%d missing=%d attr=%d value=%d\n",
-                      list_equal, list_bad, list_exist, list_attr, list_val);
-    System.out.printf("SET    ok=%d bad=%d missing=%d attr=%d value=%d\n",
-                      set_equal, set_bad, set_exist, set_attr, set_val);
+    System.out.printf("LIST   ok=%d bad=%d missing=%d attr=%d value=%d missing_0=%d missing_1=%d\n",
+                      list_equal, list_bad, list_exist, list_attr, list_val, list_missing_0, list_missing_1);
+    System.out.printf("SET    ok=%d bad=%d missing=%d attr=%d value=%d missing_0=%d missing_1=%d\n",
+                      set_equal, set_bad, set_exist, set_attr, set_val, set_missing_0, set_missing_1);
   }
 
   public static void main(String[] args) throws Exception {
