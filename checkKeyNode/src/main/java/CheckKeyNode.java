@@ -1,5 +1,6 @@
 import net.spy.memcached.ArcusClient;
 import net.spy.memcached.ConnectionFactoryBuilder;
+import net.spy.memcached.HashAlgorithm;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
@@ -63,7 +64,8 @@ public class CheckKeyNode extends Thread {
 			key = key.trim();
 			if (validateKey(key)) {
 				String node = new String(client.getNodeLocator().getPrimary(key).getSocketAddress().toString());
-				System.out.println("key : " + key + " - node : " + node.substring(node.indexOf('/') + 1));
+				long hash = HashAlgorithm.KETAMA_HASH.hash(key);
+				System.out.println("key : " + key + " - hash : "  + hash + " - node : " + node.substring(node.indexOf('/') + 1));
 			} else {
 				System.out.println("[INVALIDATE KEY : \"" + key + "\"]");
 			}
