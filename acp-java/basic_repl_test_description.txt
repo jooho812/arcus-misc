@@ -54,6 +54,14 @@ client_profile=torture_btree_replace
 key_prefix=torture_cas:
 client_profile=torture_cas
 
+[config-repl-torture_map.txt]
+key_prefix=torture_map:
+client_profile=torture_map
+
+[config-repl-torture_map_ins_del.txt]
+key_prefix=torture_map_ins_del:
+client_profile=torture_map_ins_del
+
 [config-repl-torture_list.txt]
 key_prefix=torture_list:
 client_profile=torture_list
@@ -73,6 +81,14 @@ client_profile=torture_set_ins_del
 [config-repl-torture_simple_decinc.txt]
 key_prefix=torture_simple_decinc:
 client_profile=torture_simple_decinc
+
+[config-repl-map_bulk_ins.txt]
+key_prefix=map_bulk_ins:
+client_profile=map_bulk_ins
+
+[config-repl-map_bulk_piped_ins.txt]
+key_prefix=map_bulk_piped_ins:
+client_profile=map_bulk_piped_ins
 
 [config-repl-list_bulk_ins.txt]
 key_prefix=list_bulk_ins:

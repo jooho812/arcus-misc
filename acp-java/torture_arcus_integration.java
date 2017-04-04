@@ -2,6 +2,7 @@
 /*
  * acp-java : Arcus Java Client Performance benchmark program
  * Copyright 2013-2014 NAVER Corp.
+ * Copyright 2014-2016 JaM2in Co., Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +22,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.Random;
 
 import net.spy.memcached.collection.BTreeGetResult;
@@ -112,7 +114,10 @@ public class torture_arcus_integration implements client_profile {
       
       if (!do_Collection_Btree(cli))
         return false;
-    
+
+      if (!do_Collection_Map(cli))
+        return false;
+         
       if (!do_Collection_Set(cli))
         return false;
       
@@ -457,6 +462,171 @@ public class torture_arcus_integration implements client_profile {
           System.out.printf("Collection_Btree: BopDelete failed." +
                             " id=%d key=%s: %s\n", cli.id, key_list.get(j),
                             f.getOperationStatus().getResponse());
+        }
+        if (!cli.after_request(ok))
+          return false;
+      }
+    }
+
+    return true;
+  }
+
+  public boolean do_Collection_Map(client cli) throws Exception {
+    String key = gen_key("Collection_Map");
+    List<String> key_list = new LinkedList<String>();
+    for (int i = 0; i < 4; i++)
+      key_list.add(key + i);
+
+    String mkeyBASE = "mkey";
+
+    CollectionAttributes attr = new CollectionAttributes();
+    attr.setExpireTime(ExpireTime);
+
+    String[] workloads = { chunk_values[1],
+            chunk_values[1],
+            chunk_values[2],
+            chunk_values[2],
+            chunk_values[3] };
+
+    // MopInsert
+    for (int j = 0; j < 4; j++) {
+      // Insert 50 mkey
+      for (int i = 0; i < 50; i++) {
+        if (!cli.before_request())
+          return false;
+        // Uniq mkey
+        String mkey = mkeyBASE + Integer.toString(j) + Integer.toString(i);
+        CollectionFuture<Boolean> f = cli.next_ac.
+                asyncMopInsert(key_list.get(j), mkey,
+                        workloads[random.nextInt(workloads.length)], attr);
+        boolean ok = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+        if (!ok) {
+          System.out.printf("Collection_Map: MopInsert failed." +
+                          " id=%d key=%s mkey=%s: %s\n", cli.id,
+                  key_list.get(j), mkey,
+                  f.getOperationStatus().getResponse());
+        }
+        if (!cli.after_request(ok))
+          return false;
+      }
+    }
+
+    // MopInsert Bulk (Piped)
+    {
+      Map<String, Object> elements = new HashMap<String, Object>();
+      for (int i = 0; i < 50; i++) {
+        String mkey = mkeyBASE + Integer.toString(i) + "bulk";
+        elements.put(mkey, workloads[0]);
+      }
+      if (!cli.before_request())
+        return false;
+      CollectionFuture<Map<Integer, CollectionOperationStatus>> f =
+              cli.next_ac.asyncMopPipedInsertBulk(key_list.get(0), elements,
+                      new CollectionAttributes());
+      Map<Integer, CollectionOperationStatus> status_map =
+              f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+      Iterator<CollectionOperationStatus> status_iter =
+              status_map.values().iterator();
+      while (status_iter.hasNext()) {
+        CollectionOperationStatus status = status_iter.next();
+        CollectionResponse resp = status.getResponse();
+        if (resp != CollectionResponse.STORED) {
+          System.out.printf("Collection_Map: MopPipedInsertBulk failed." +
+                          " id=%d key=%s response=%s\n", cli.id,
+                  key_list.get(0), resp);
+        }
+      }
+      if (!cli.after_request(true))
+        return false;
+    }
+
+    // MopGet all
+    {
+      if (!cli.before_request())
+        return false;
+      CollectionFuture<Map<String, Object>> f =
+              cli.next_ac.asyncMopGet(key_list.get(0), false, false);
+      Map<String, Object> val =
+              f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+      if (val == null || val.size() != 100) {
+        System.out.printf("Collection_Map: MopGet all failed." +
+                        " id=%d key=%s val.size=%d\n", cli.id,
+                key_list.get(0), val == null ? -1 : 0);
+      }
+      if (!cli.after_request(true))
+        return false;
+    }
+
+    // MopEmpty Create
+    {
+      if (!cli.before_request())
+        return false;
+      CollectionFuture<Boolean> f =
+              cli.next_ac.asyncMopCreate(key, ElementValueType.STRING,
+                      new CollectionAttributes());
+      boolean ok = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+      if (!ok) {
+        System.out.printf("Collection_Map: MopCreate failed." +
+                        " id=%d key=%s: %s\n", cli.id, key,
+                f.getOperationStatus().getResponse());
+      }
+      if (!cli.after_request(ok))
+        return false;
+    }
+
+    // MopUpdate
+    {
+      String key0 = key_list.get(0);
+      String value = "ThisIsChangeValue";
+      for (int i = 0; i < 2; i++) {
+        if (!cli.before_request())
+          return false;
+        String mkey = mkeyBASE + "0" + Integer.toString(i);
+        CollectionFuture<Boolean> f =
+                cli.next_ac.asyncMopUpdate(key0, mkey, value);
+        boolean ok = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+        if (!ok) {
+          System.out.printf("Collection_Map: MopUpdate failed." +
+                          " id=%d key=%s: %s\n", cli.id, key0,
+                  f.getOperationStatus().getResponse());
+        }
+        if (!cli.after_request(ok))
+          return false;
+      }
+    }
+
+    // SetAttr  (change Expire Time)
+    {
+      if (!cli.before_request())
+        return false;
+      attr.setExpireTime(100);
+      CollectionFuture<Boolean> f = cli.next_ac.asyncSetAttr(key, attr);
+      boolean ok = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+      if (!ok) {
+        System.out.printf("Collection_Map: SetAttr failed." +
+                        " id=%d key=%s: %s\n", cli.id, key,
+                f.getOperationStatus().getResponse());
+      }
+      if (!cli.after_request(ok))
+        return false;
+    }
+
+    // MopDelete
+    for (int j = 0; j < 4; j++) {
+      // Delete 50 mkey
+      for (int i = 0; i < 50; i++) {
+        if (!cli.before_request())
+          return false;
+        // Uniq mkey
+        String mkey = mkeyBASE + Integer.toString(j) + Integer.toString(i);
+        CollectionFuture<Boolean> f = cli.next_ac.
+                asyncMopDelete(key_list.get(j), mkey, true);
+        boolean ok = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+        if (!ok) {
+          System.out.printf("Collection_Map: MopDelete failed." +
+                          " id=%d key=%s mkey=%s: %s\n", cli.id,
+                  key_list.get(j), mkey,
+                  f.getOperationStatus().getResponse());
         }
         if (!cli.after_request(ok))
           return false;

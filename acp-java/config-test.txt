@@ -42,6 +42,9 @@ valueset_max_size=2000
 key_prefix=btree:
 client_profile=torture_btree_bytemaxbkeyrange
 
+#key_prefix=map:
+#client_profile=torture_map_ins_del
+
 #key_prefix=set:
 #client_profile=torture_set_ins_del
 

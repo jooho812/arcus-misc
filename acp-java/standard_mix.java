@@ -2,6 +2,7 @@
 /*
  * acp-java : Arcus Java Client Performance benchmark program
  * Copyright 2013-2014 NAVER Corp.
+ * Copyright 2014-2016 JaM2in Co., Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,6 +133,62 @@ public class standard_mix implements client_profile {
     // Smget
     // Getattr
     // PipedInsert
+    return true;
+  }
+
+  public boolean do_map_test(client cli) throws Exception {
+    // Pick a key
+    String key = cli.ks.get_key();
+    
+    if (!do_delete_if_exist(cli, key, CollectionType.map))
+      return false;
+
+    // Create a set item
+    if (!cli.before_request())
+      return false;
+    ElementValueType vtype = ElementValueType.BYTEARRAY;
+    CollectionAttributes attr = 
+      new CollectionAttributes(cli.conf.client_exptime,
+                               CollectionAttributes.DEFAULT_MAXCOUNT,
+                               CollectionOverflowAction.error);
+    // For set items, OverflowAction is always "error".
+
+    CollectionFuture<Boolean> fb = cli.next_ac.asyncMopCreate(key, vtype, attr);
+    boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+    if (!ok) {
+      System.out.printf("mop create failed. id=%d key=%s: %s\n", cli.id,
+                        key, fb.getOperationStatus().getResponse());
+    }
+    if (!cli.after_request(ok))
+      return false;
+    if (!ok)
+      return true;
+    
+    // Insert a number of elements.  Set has no element keys.
+    for (int i = 0; i < 100; i++) {
+      if (!cli.before_request())
+        return false;
+      String mkey = "mkey" + Integer.toString(i);
+      byte[] val = cli.vset.get_value();
+      assert(val.length <= 4096);
+      fb = cli.next_ac.asyncMopInsert(key, mkey, val,
+                                      null /* Do not auto-create item */);
+      ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+      if (!ok) {
+        System.out.printf("mop insert failed. id=%d key=%s: %s\n", cli.id,
+                          key, fb.getOperationStatus().getResponse());
+      }
+      if (!cli.after_request(ok))
+        return false;
+      if (!ok)
+        return true;
+    }
+
+    // Get/delete
+    // Delete
+    // PipedInsertBulk
+    // Expire time
+    // Getattr
     return true;
   }
 
