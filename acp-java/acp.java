@@ -149,6 +149,9 @@ class acp {
     else if (conf.client_profile.equals("torture_list_ins_maxelement")) {
       profile = new torture_list_ins_maxelement();
     }
+    else if (conf.client_profile.equals("torture_reappear_test")) {
+      profile = new torture_reappear_test();
+    }
     else if (conf.client_profile.equals("tiny_btree")) {
       profile = new tiny_btree();
     }

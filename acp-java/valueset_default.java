@@ -15,11 +15,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import java.util.Random;
 class valueset_default implements valueset {
   int min;
   int max;
   int next_size;
   byte start_byte;
+
+  Random random;
+  long nsize;
+  long base_kvsize;
 
   public valueset_default(int min, int max) {
     this.min = min;
@@ -30,6 +35,7 @@ class valueset_default implements valueset {
   public void reset() {
     next_size = min;
     start_byte = 0;
+    random = new Random();
   }
 
   public byte[] get_value() {
@@ -52,5 +58,38 @@ class valueset_default implements valueset {
     
     // FIXME.  Is there any way to share the underly storage?
     return val;
+  }
+
+  public byte[] get_value(int value_length) {
+      byte b;
+      synchronized(this) {
+          b = start_byte++;
+      }
+
+      byte[] val = new byte[value_length];
+      for (int i = 0; i < val.length; i++)
+          val[i] = b++;
+
+      return val;
+  }
+
+  /* must modify keyset_default.java together */
+  public long getvalsize(String keyset) {
+      synchronized(this) {
+          if(keyset.contains("1section")) { /* value 20(110) ~ 50(140) + sizeof(hash_item) + cas + \r\n + keylength(about 20) */
+              nsize = (long)(110 + random.nextInt(31));
+          } else if (keyset.contains("2section")) { /* value 51(141) ~ 100(190) */
+              nsize = (long)(141 + random.nextInt(50));
+          } else if (keyset.contains("3section")) { /* value 101(191) ~ 1000(1090) */
+              nsize = (long)(191 + random.nextInt(900));
+          } else if (keyset.contains("4section")) { /* value 1001(1091) ~ 3000(3090) */
+              nsize = (long)(1091 + random.nextInt(2000));
+          } else if (keyset.contains("5section")) { /* value 3001(3091) ~ 7000(7090) */
+              nsize = (long)(3091 + random.nextInt(4000));
+          } else if (keyset.contains("6section")) { /* value 7001(7091) ~ 15000(15090) */
+              nsize = (long)(7091 + random.nextInt(8000));
+          }
+      }
+      return nsize;
   }
 }

@@ -50,4 +50,7 @@ class keyset_numeric implements keyset {
       next_idx = 0;
     return set[idx];
   }
+  synchronized public String get_reappearkey(){
+      return "";
+  }
 }
