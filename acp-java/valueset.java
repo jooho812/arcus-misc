@@ -18,6 +18,4 @@
 interface valueset {
   public void reset();
   public byte[] get_value();
-  public byte[] get_value(int value_length);
-  public long getvalsize(String keyset);
 }

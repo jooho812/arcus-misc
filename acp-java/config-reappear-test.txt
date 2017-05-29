@@ -19,14 +19,13 @@ request=0
 #
 time=1000000
 
-keyset_size=6000000
-#key_prefix must contain "reappear" for reappear test
-key_prefix=reappear001:
+#keyset_size=6000000
+#key_prefix=reappear001:
 valueset_min_size=100
 valueset_max_size=100
 
 client_profile=torture_reappear_test
-client_exptime=0
+#client_exptime=0
 client_timeout=2000
 
 pool=2
