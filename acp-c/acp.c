@@ -94,10 +94,16 @@ setup(void)
     prof = torture_set_init();
   else if (0 == strcmp(conf.client_profile, "torture_set_ins_del"))
     prof = torture_set_ins_del_init();
+  else if (0 == strcmp(conf.client_profile, "torture_set_piped_ins"))
+    prof = torture_set_piped_ins_init();
+  else if (0 == strcmp(conf.client_profile, "torture_set_piped_exist"))
+    prof = torture_set_piped_exist_init();
   else if (0 == strcmp(conf.client_profile, "torture_list"))
     prof = torture_list_init();
   else if (0 == strcmp(conf.client_profile, "torture_list_ins_del"))
     prof = torture_list_ins_del_init();
+  else if (0 == strcmp(conf.client_profile, "torture_list_piped_ins"))
+    prof = torture_list_piped_ins_init();
   else if (0 == strcmp(conf.client_profile, "torture_btree"))
     prof = torture_btree_init();
   else if (0 == strcmp(conf.client_profile, "torture_btree_ins_del"))
@@ -114,6 +120,10 @@ setup(void)
     prof = torture_btree_bytebkey_init();
   else if (0 == strcmp(conf.client_profile, "torture_btree_bytemaxbkeyrange"))
     prof = torture_btree_bytemaxbkeyrange_init();
+  else if (0 == strcmp(conf.client_profile, "torture_btree_piped_ins"))
+    prof = torture_btree_piped_ins_init();
+  else if (0 == strcmp(conf.client_profile, "torture_btree_piped_ins_bulk"))
+    prof = torture_btree_piped_ins_bulk_init();
   else {
     ERROR_DIE("Unknown client profile. profile=%s", conf.client_profile);
   }
