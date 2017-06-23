@@ -38,9 +38,14 @@ struct client_profile *torture_btree_exptime_init(void);
 struct client_profile *torture_btree_maxbkeyrange_init(void);
 struct client_profile *torture_btree_bytebkey_init(void);
 struct client_profile *torture_btree_bytemaxbkeyrange_init(void);
+struct client_profile *torture_btree_piped_ins_init(void);
+struct client_profile *torture_btree_piped_ins_bulk_init(void);
 struct client_profile *torture_set_init(void);
 struct client_profile *torture_set_ins_del_init(void);
+struct client_profile *torture_set_piped_ins_init(void);
+struct client_profile *torture_set_piped_exist_init(void);
 struct client_profile *torture_list_init(void);
 struct client_profile *torture_list_ins_del_init(void);
+struct client_profile *torture_list_piped_ins_init(void);
 
 #endif /* !defined(_CLIENT_PROFILE_H_) */
