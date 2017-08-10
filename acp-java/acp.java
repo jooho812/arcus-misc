@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
+import java.lang.Thread.UncaughtExceptionHandler;
 
 import net.spy.memcached.ArcusClient;
 import net.spy.memcached.ArcusClientPool;
@@ -46,6 +47,25 @@ class acp {
   class myclient extends ArcusClient {
     myclient(List<InetSocketAddress> addrs) throws Exception {
       super(new myfactory(), addrs);
+    }
+  }
+  class threadExceptionHandler implements UncaughtExceptionHandler {
+    private String handlerName;
+
+    public threadExceptionHandler(String handlerName) {
+      this.handlerName = handlerName;
+    }
+
+    @Override
+    public void uncaughtException(Thread thread, Throwable e) {
+      boolean assertException = e.toString().startsWith("java.lang.AssertionError");
+
+      System.out.println(handlerName + " caught Exception in Thread - "
+                       + thread.getName()
+                       + " : " + e);
+      if (assertException) {
+        System.exit(1);
+      }
     }
   }
 
@@ -96,6 +116,11 @@ class acp {
     else if (conf.client_profile.equals("torture_simple_sticky")) {
       profile = new torture_simple_sticky();
     }
+    //for arcus integration test
+    else if (conf.client_profile.equals("integration_simplekv")) {
+      profile = new integration_simplekv();
+    }
+    //end arcus integration test
     else if (conf.client_profile.equals("torture_btree")) {
       profile = new torture_btree();
     }
@@ -332,6 +357,7 @@ class acp {
     }
 
     // Create threads
+    Thread.setDefaultUncaughtExceptionHandler(new threadExceptionHandler("DefaultHandler"));
     client_thread = new Thread[conf.client];
     for (int i = 0; i < conf.client; i++) {
       client_thread[i] = new Thread(client[i]);
