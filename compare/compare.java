@@ -1028,7 +1028,7 @@ public class compare {
       if (count >= next_progress_tick) {
         next_progress_tick += progress_tick;
         System.out.println("Checked items so far=" + count +
-                           " / " + total_items);
+                           " / " + total_items + " (" + (count * 100)/total_items + "%)");
       }
     }
 

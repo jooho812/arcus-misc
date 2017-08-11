@@ -22,6 +22,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.io.File;
+import java.io.FileWriter;
 
 import net.spy.memcached.ArcusClient;
 import net.spy.memcached.ArcusClientPool;
@@ -36,8 +38,11 @@ class acp {
   client[] client;
   Thread[] client_thread;
 
+  static long avg_request;
+
   public acp(config conf) {
     this.conf = conf;
+    this.avg_request = 0;
   }
 
   // Used to create ArcusClient that uses the single server specified by
@@ -59,11 +64,13 @@ class acp {
     @Override
     public void uncaughtException(Thread thread, Throwable e) {
       boolean assertException = e.toString().startsWith("java.lang.AssertionError");
-
       System.out.println(handlerName + " caught Exception in Thread - "
                        + thread.getName()
                        + " : " + e);
       if (assertException) {
+        //for (client cli : client) {
+        //  cli.set_stop(true);
+        //}
         System.exit(1);
       }
     }
@@ -119,6 +126,27 @@ class acp {
     //for arcus integration test
     else if (conf.client_profile.equals("integration_simplekv")) {
       profile = new integration_simplekv();
+    }
+    else if (conf.client_profile.equals("integration_list")) {
+      profile = new integration_list();
+    }
+    else if (conf.client_profile.equals("integration_set")) {
+      profile = new integration_set();
+    }
+    else if (conf.client_profile.equals("integration_map")) {
+      profile = new integration_map();
+    }
+    else if (conf.client_profile.equals("integration_btree")) {
+      profile = new integration_btree();
+    }
+    else if (conf.client_profile.equals("integration_onlyset")) {
+      profile = new integration_onlyset();
+    }
+    else if (conf.client_profile.equals("integration_onlyget")) {
+      profile = new integration_onlyget();
+    }
+    else if (conf.client_profile.equals("integration_getset_ratio")) {
+      profile = new integration_getset_ratio();
     }
     //end arcus integration test
     else if (conf.client_profile.equals("torture_btree")) {
@@ -433,6 +461,7 @@ class acp {
             System.out.println("Ran tests long enough. Stopping clients...");
             // Tell clients to stop
             for (client cli : client) {
+              avg_request += (cli.stat_requests / conf.time);
               cli.set_stop(true);
             }
           }
@@ -468,7 +497,8 @@ class acp {
         prev_stat_requests_error = stat_requests_error -
           prev_stat_requests_error;
         long request_rate = delta_requests/diff_time;
-        avg_request_rate = (95 * avg_request_rate + 5 * request_rate) / 100;
+        avg_request_rate = (avg_request_rate == 0) ? request_rate
+                                                   : (95 * avg_request_rate + 5 * request_rate) / 100;
 
         long delta_error = prev_stat_requests_error;
         long error_rate = prev_stat_requests_error/diff_time;
@@ -571,6 +601,38 @@ class acp {
     acp acp = new acp(conf);
     acp.setup();
     acp.run_bench();
+    if (conf.generate_resultfile != null) {
+      System.out.println("Generating summary of result file....");
+      String txt = "################################\n"
+                 + "test summary of " + conf.client_profile + "\n"
+                 + "################################\n"
+                 + "elapsed(s)=" + conf.time + "\n"
+                 + "requests/s=" + avg_request + "\n"
+                 + "zookeeper=" + conf.zookeeper + "\n"
+                 + "service_code=" + conf.service_code + "\n"
+                 + "single_server=" + conf.single_server + "\n"
+                 + "client=" + conf.client + "\n"
+                 + "rate=" + conf.rate + "\n"
+                 + "request=" + conf.request + "\n"
+                 + "pool=" + conf.pool + "\n"
+                 + "poolsize=" + conf.pool_size + "\n"
+                 + "keyset_size=" + conf.keyset_size + "\n"
+                 + "valueset_min_size=" + conf.valueset_min_size + "\n"
+                 + "valueset_mzs_size=" + conf.valueset_max_size + "\n"
+                 + "client_exptime=" + conf.client_exptime + "\n"
+                 + "client_timeout=" + conf.client_timeout + "\n";
+                 //+ "time=" + System.currentTimeMillis() +"\n";
+
+      File file = new File(conf.generate_resultfile);
+      FileWriter fw = new FileWriter(file, false);
+
+      fw.write(txt);
+      fw.flush();
+
+      fw.close();
+      System.out.println("File generation successful!!"
+                       + " see a \"" + conf.generate_resultfile + "\"");
+    }
     System.exit(0);
   }
 

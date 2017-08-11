@@ -18,6 +18,9 @@
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import net.spy.memcached.CASResponse;
+import net.spy.memcached.CASValue;
+
 public class integration_simplekv implements client_profile {
   String key;
   Future<Boolean> fb;
@@ -53,9 +56,7 @@ public class integration_simplekv implements client_profile {
                      , "kv_pre_test"
                      , "kv_apd_test"
                      , "kv_get_test"
-                     , "kv_casgets_test1"
-                     , "kv_casgets_test2"
-                     , "kv_casgets_test3"
+                     , "kv_casgets_test"
                      , "kv_incr_test"
                      , "kv_decr_test"};
 
@@ -72,14 +73,26 @@ public class integration_simplekv implements client_profile {
           return false;
       }
     }
+    System.out.println("######## KV TEST START! #######");
     // test 1 : set
     simple_set_test(cli);
+    System.out.println("KV TEST : SET_TEST SUCCESS!");
     // test 2 : add
     simple_add_test(cli);
+    System.out.println("KV TEST : ADD_TEST SUCCESS!");
     // test 3 : replace
     simple_replace_test(cli);
+    System.out.println("KV TEST : REPLACE_TEST SUCCESS!");
     // test 4 : prepend/append/delete
     simple_attach_delete_test(cli);
+    System.out.println("KV TEST : DELETE_TEST SUCCESS!");
+    // test 5 : cas/gets
+    simple_cas_gets_test(cli);
+    System.out.println("KV TEST : CAS_TEST SUCCESS!");
+    // test 6 : incr/decr
+    simple_arithmetic_test(cli);
+    System.out.println("KV TEST : ARITHMETIC_TEST SUCCESS!");
+    System.out.println("####### KV TEST SUCCESS! ######");
 
     System.exit(0);
     return true;
@@ -179,5 +192,57 @@ public class integration_simplekv implements client_profile {
     ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
 
     assert !ok : "kv_apd_test delete failed, predicted NOT_FOUND";
+  }
+
+  public void simple_cas_gets_test(client cli) throws Exception {
+    //test 5 : cas
+    key = "kv_casgets_test";
+    fb = cli.next_ac.set(key, cli.conf.client_exptime, "7777"); //set prepend key
+    ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+
+    assert ok : "kv_incr_test failed, predicted STORED";
+
+    long cas;
+    Future<CASValue<byte[]>> fcas;
+    CASValue<byte[]> casvalue;
+    fcas = cli.next_ac.asyncGets(key, raw_transcoder.raw_tc);
+    casvalue = fcas.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+    cas = casvalue.getCas();
+
+    Future<CASResponse> fcasr;
+    CASResponse casres;
+    fcasr = cli.next_ac.asyncCAS(key, cas, "8888");
+    casres = fcasr.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+
+    assert (casres == CASResponse.OK) : "kv_casgets_test failed, predicted OK";
+  }
+
+  public void simple_arithmetic_test(client cli) throws Exception {
+    // test 6 : arithmetic
+    // increase
+    Future<Long> fl;
+    long result;
+    key = "kv_incr_test";
+    fb = cli.next_ac.set(key, cli.conf.client_exptime, "7777"); //set prepend key
+    ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+
+    assert ok : "kv_incr_test failed, predicted STORED";
+
+    fl = cli.next_ac.asyncIncr(key, 2223);
+    result = fl.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+
+    assert (result == 10000) : "kv_incr_test failed, predicted value is 10000";
+
+    // decrease
+    key = "kv_decr_test";
+    fb = cli.next_ac.set(key, cli.conf.client_exptime, "7777"); //set prepend key
+    ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+
+    assert ok : "kv_incr_test failed, predicted STORED";
+
+    fl = cli.next_ac.asyncDecr(key, 2222);
+    result = fl.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+
+    assert (result == 5555) : "kv_decr_test failed, predicted value is 5555";
   }
 }

@@ -50,6 +50,7 @@ public class config {
   public int ins_element_size = 50000;
   public int act_element_size = 10000;
   public boolean print_stack_trace = true;
+  public String generate_resultfile = null;
 
   public config() {
   }
@@ -188,6 +189,9 @@ public class config {
     else if (key.equals("print_stack_trace")) {
       if (Integer.parseInt(val) == 0)
         print_stack_trace = false;
+    }
+    else if (key.equals("generate_resultfile")) {
+        generate_resultfile = val;
     }
     else {
       throw new Exception("Unknown configuration key/value. line="+ line);

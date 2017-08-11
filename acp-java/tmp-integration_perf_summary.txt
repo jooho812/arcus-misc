@@ -1,0 +1,18 @@
+################################
+test summary of simple_getset
+################################
+elapsed(s)=10
+requests/s=41976
+zookeeper=127.0.0.1:2181
+service_code=test
+single_server=localhost:11291
+client=30
+rate=0
+request=0
+pool=1
+poolsize=20
+keyset_size=10000000
+valueset_min_size=20
+valueset_mzs_size=20
+client_exptime=0
+client_timeout=1000

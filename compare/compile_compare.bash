@@ -1,8 +1,10 @@
+#!/bin/bash
+
 DIR=`readlink -f $0`
 DIR=`dirname $DIR`
 if test -d "$DIR/../../arcus-java-client" ; then
   JAR_DIR=$DIR/../../arcus-java-client/target
-  CP=$JAR_DIR/arcus-java-client-1.8.1.jar
+  CP=$JAR_DIR/arcus-java-client-1.10.1-SNAPSHOT.jar
 else
   if test -d "$DIR/../../java-memcached-client" ; then
     JAR_DIR=$DIR/../../java-memcached-client/target
