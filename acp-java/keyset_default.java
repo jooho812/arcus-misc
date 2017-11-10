@@ -20,6 +20,8 @@
 class keyset_default implements keyset {
   String[] set;
   int next_idx;
+  // for integration test
+  boolean keyset_store;
 
   public keyset_default(int num, String prefix) {
     set = new String[num];
@@ -33,12 +35,19 @@ class keyset_default implements keyset {
 
   public void reset() {
     next_idx = 0;
+    keyset_store = false;
   }
 
   synchronized public String get_key() {
     int idx = next_idx++;
-    if (next_idx >= set.length)
+    if (next_idx >= set.length) {
+      keyset_store = true;
       next_idx = 0;
+    }
     return set[idx];
+  }
+
+  synchronized public boolean keyset_store() {
+      return keyset_store;
   }
 }

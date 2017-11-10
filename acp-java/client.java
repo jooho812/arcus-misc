@@ -26,6 +26,7 @@ public class client implements Runnable {
   ArcusClientPool pool;
   ArcusClient fixed_ac = null;
   int id;
+  int ratio;
   keyset ks;
   bkey_set bks;
   valueset vset;
@@ -54,6 +55,7 @@ public class client implements Runnable {
     this.bks = bks;
     this.vset = vset;
     this.profile = profile;
+    this.ratio = 4;
   }
   
   public void set_fixed_arcus_client(ArcusClient ac) {
@@ -130,6 +132,10 @@ public class client implements Runnable {
       // Response time
       request_start_usec = System.nanoTime() / 1000;
       return true;
+  }
+
+  public synchronized int get_ratio() {
+      return (int)(stat_requests % ratio);
   }
 
   public synchronized Vector<Long> remove_latency_vector() {

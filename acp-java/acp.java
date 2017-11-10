@@ -68,9 +68,6 @@ class acp {
                        + thread.getName()
                        + " : " + e);
       if (assertException) {
-        //for (client cli : client) {
-        //  cli.set_stop(true);
-        //}
         System.exit(1);
       }
     }
@@ -147,6 +144,12 @@ class acp {
     }
     else if (conf.client_profile.equals("integration_getset_ratio")) {
       profile = new integration_getset_ratio();
+    }
+    else if (conf.client_profile.equals("integration_repltest")) {
+      profile = new integration_repltest();
+    }
+    else if (conf.client_profile.equals("integration_arcus")) {
+      profile = new integration_arcus();
     }
     //end arcus integration test
     else if (conf.client_profile.equals("torture_btree")) {

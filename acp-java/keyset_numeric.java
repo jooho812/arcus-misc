@@ -50,4 +50,8 @@ class keyset_numeric implements keyset {
       next_idx = 0;
     return set[idx];
   }
+
+  public boolean keyset_store() {
+    return false;
+  }
 }

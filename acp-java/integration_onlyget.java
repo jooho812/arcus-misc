@@ -39,19 +39,35 @@ public class integration_onlyget implements client_profile {
   public boolean do_simple_test(client cli) throws Exception {
     // Do one set and one get.  The same key.
 
+    int get_try = 10;
     if (!cli.before_request())
       return false;
+
     String key = cli.ks.get_key();
     byte[] val = cli.vset.get_value();
-    Future<byte[]> f = cli.next_ac.asyncGet(key, raw_transcoder.raw_tc);
-    val = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
 
-    if (val == null) {
-      System.out.printf("get failed. id=%d key=%s\n", cli.id, key);
-      System.exit(1);
-    }
+    do {
+      try {
+        Future<byte[]> f = cli.next_ac.asyncGet(key, raw_transcoder.raw_tc);
+        val = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+      } catch (net.spy.memcached.internal.CheckedOperationTimeoutException te) {
+          if (get_try-- > 0) {
+              System.out.printf("get failed. id=%d key=%s remain try count : %d\n",cli.id, key, get_try);
+              Thread.sleep(1000);
+          } else {
+              System.out.printf("get failed. id=%d key=%s get operation exceeded 10 times\n",cli.id, key);
+              System.exit(1);
+          }
+      } catch (Exception e) {
+          System.out.printf("get failed. id=%d key=%s\n",cli.id);
+          e.printStackTrace();
+          System.exit(1);
+      }
+    } while (val == null);
+
     if (!cli.after_request(true))
       return false;
+
     return true;
   }
 }
