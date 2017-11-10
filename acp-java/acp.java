@@ -148,6 +148,9 @@ class acp {
     else if (conf.client_profile.equals("integration_getset_ratio")) {
       profile = new integration_getset_ratio();
     }
+    else if (conf.client_profile.equals("integration_repltest")) {
+      profile = new integration_repltest();
+    }
     //end arcus integration test
     else if (conf.client_profile.equals("torture_btree")) {
       profile = new torture_btree();

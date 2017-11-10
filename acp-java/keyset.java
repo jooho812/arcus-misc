@@ -18,4 +18,5 @@
 interface keyset {
   public void reset();
   public String get_key();
+  public boolean keyset_store();
 }

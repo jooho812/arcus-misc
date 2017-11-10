@@ -4,21 +4,13 @@ use strict;
 
 my $m_port = 11293; # master port
 my $s_port = 11294; # slave  port
-my $run_time = 0;
+my $run_time = 600;
 my $keyset_size = 10000000;
 sub print_usage {
-  print "Usage) perl ./integration/run_integration_repl_switchover.pl master_port slave_port run_time [keyset_size]\n";
+  print "Usage) perl ./integration/run_integration_repl_switchover.pl\n";
 }
 
-if ($#ARGV == 3 || $#ARGV == 2) {
-  $m_port = $ARGV[0];
-  $s_port = $ARGV[1];
-  if ($#ARGV >= 2) {
-    $run_time = $ARGV[2];
-    if ($#ARGV == 3) {
-      $keyset_size = $ARGV[3];
-    }
-  }
+if ($#ARGV == -1) {
   print "master_port = $m_port\n";
   print "slave_port  = $s_port\n";
   print "run_time = $run_time\n";
@@ -70,7 +62,7 @@ print CONF
     "client=30\n" .
     "rate=0\n" .
     "request=0\n" .
-    "time=100000\n" .
+    "time=99999\n" .
     "keyset_size=$keyset_size\n" .
     "valueset_min_size=20\n" .
     "valueset_max_size=20\n" .
@@ -106,7 +98,7 @@ print CONF
     "zookeeper=127.0.0.1:9181\n" .
     "service_code=test_rp\n" .
     #"single_server=" . $t_ip . ":" . $t_port . "\n" .
-    "client=20\n" .
+    "client=30\n" .
     "rate=0\n" .
     "request=0\n" .
     "time=$run_time\n" .
