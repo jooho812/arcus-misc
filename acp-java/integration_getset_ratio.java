@@ -46,29 +46,29 @@ public class integration_getset_ratio implements client_profile {
     Future<Boolean> fb;
     Future<byte[]> f;
     boolean ok;
-    int get_count = 4; // get/set ratio 4:1
+    int ratio = cli.get_ratio();
 
-    if (!cli.before_request())
-      return false;
-    // Pick a key
-    key = cli.ks.get_key();
-    val = cli.vset.get_value();
-    fb = cli.next_ac.set(key, cli.conf.client_exptime, val, raw_transcoder.raw_tc);
-    ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
-    if (!ok) {
-      System.out.printf("integration test set failed. id=%d key=%s\n", cli.id, key);
-      System.exit(1);
-    }
-    if (!cli.after_request(ok))
-      return false;
-
-    for (int i = 0; i < get_count; i++) {
+    if (ratio == 0) {
+      if (!cli.before_request())
+        return false;
+      // Pick a key
+      key = cli.ks.get_key();
+      val = cli.vset.get_value();
+      fb = cli.next_ac.set(key, cli.conf.client_exptime, val, raw_transcoder.raw_tc);
+      ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+      if (!ok) {
+        System.out.printf("integration test set failed. id=%d key=%s\n", cli.id, key);
+        System.exit(1);
+      }
+      if (!cli.after_request(ok))
+        return false;
+    } else {
       if (!cli.before_request())
         return false;
       key = cli.ks.get_key();
       f = cli.next_ac.asyncGet(key, raw_transcoder.raw_tc);
       val = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
-  
+
       if (val == null) {
         System.out.printf("integration test get failed. id=%d key=%s\n", cli.id, key);
         System.exit(1);

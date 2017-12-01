@@ -45,9 +45,9 @@ sleep 1;
 #############################################
 ## 2. after a few seconds master node down ##
 #############################################
-my $m_node_kill = 5; # after m_node_kill seconds. kill -9 master node
-my $cmd = "perl ./integration/kill.memcached.perl $m_port $m_node_kill &";
-print "after $m_node_kill seconds... kill -9 master node\n";
+my $kill_time = 100; # after kill_time seconds. kill -9 master node
+my $cmd = "perl ./integration/kill.memcached.perl $m_port $kill_time &";
+print "after $kill_time seconds... kill -9 master node\n";
 print $cmd , "\n";
 system($cmd);
 sleep 1;
@@ -60,23 +60,23 @@ print CONF
     "zookeeper=127.0.0.1:9181\n" .
     "service_code=test_rp\n" .
     #"single_server=" . $t_ip . ":" . $t_port . "\n" .
-    "client=30\n" .
+    "client=100\n" .
     "rate=0\n" .
     "request=0\n" .
     "time=$run_time\n" .
     "keyset_size=$keyset_size\n" .
     "valueset_min_size=10\n" .
     "valueset_max_size=30\n" .
-    "pool=1\n" .
-    "pool_size=20\n" .
+    "pool=5\n" .
+    "pool_size=30\n" .
     "pool_use_random=false\n" .
     "key_prefix=integrationtest:\n" .
     "client_exptime=0\n" .
-    "client_timeout=2000\n" .
+    "client_timeout=3000\n" .
     "client_profile=integration_repltest\n";
 close CONF;
 
-$cmd = "java -Xmx2g -Xms2g -Dnet.spy.log.LoggerImpl=net.spy.memcached.compat.log.Log4JLogger" .
+$cmd = "java -Xmx3g -Xms3g -Dnet.spy.log.LoggerImpl=net.spy.memcached.compat.log.Log4JLogger" .
        " -classpath $cls_path:. acp -config tmp-integration-config.txt";
 printf "RUN COMMAND=%s\n", $cmd;
 

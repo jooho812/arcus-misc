@@ -44,7 +44,7 @@ public class integration_repltest implements client_profile {
     boolean ok = false;
 
     // set as many keys as cli.conf.keyset_size
-    while (!cli.ks.keyset_store()) {
+    if (!cli.ks.keyset_store()) {
       if (!cli.before_request())
         return false;
       key = cli.ks.get_key();
@@ -54,39 +54,40 @@ public class integration_repltest implements client_profile {
           fb = cli.next_ac.set(key, cli.conf.client_exptime, val, raw_transcoder.raw_tc);
           ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
         } catch (net.spy.memcached.internal.CheckedOperationTimeoutException te) {
-          System.out.println("this test should not occur with TimeoutException... increase client_timeout");
-          System.exit(1);
+          System.out.println("this test should not occur with TimeoutException... retry set key : " + key);
+          //System.out.println("this test should not occur with TimeoutException... increase client_timeout");
+          //System.exit(1);
         } catch (Exception e) {
-            // 타임아웃이랑 커넥션이랑 구분해야함.
+          // master node down...
           System.out.printf("master node down... 30 seconds waiting for switchover... cli_id=%d\n",cli.id);
           System.out.println(e.toString());
+
+          // waiting sleep_count secondes....
           int sleep_count = 33;
           while (sleep_count > 0) {
               Thread.sleep(1000);
               sleep_count--;
           }
-          fb = cli.next_ac.set(key, cli.conf.client_exptime, val, raw_transcoder.raw_tc);
-          ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
         }
       } while (!ok);
       if (!cli.after_request(ok))
         return false;
-    }
+    } else {
+      // get operation
+      if (!cli.before_request())
+        return false;
+      key = cli.ks.get_key();
+      val = cli.vset.get_value();
+      Future<byte[]> f = cli.next_ac.asyncGet(key, raw_transcoder.raw_tc);
+      val = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
 
-    // get operation
-    if (!cli.before_request())
-      return false;
-    key = cli.ks.get_key();
-    val = cli.vset.get_value();
-    Future<byte[]> f = cli.next_ac.asyncGet(key, raw_transcoder.raw_tc);
-    val = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
-
-    if (val == null) {
-      System.out.printf("get failed. id=%d key=%s\n", cli.id, key);
-      System.exit(1);
+      if (val == null) {
+        System.out.printf("get failed. id=%d key=%s\n", cli.id, key);
+        System.exit(1);
+      }
+      if (!cli.after_request(true))
+        return false;
     }
-    if (!cli.after_request(true))
-      return false;
     return true;
   }
 }

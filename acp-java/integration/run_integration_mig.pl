@@ -3,18 +3,14 @@
 use strict;
 
 # use port 11281 ~ 11290, 21125 ~ 21134
-my $run_time = 0;
-my $keyset_size = 5000000;
+my $run_time = 600;
+my $keyset_size = 10000000;
 
 sub print_usage {
-    print "Usage) perl ./integration/run_integration_mig.pl run_time [keyset_size]\n";
+    print "Usage) perl ./integration/run_integration_mig.pl\n";
 }
 
-if ($#ARGV == 1 || $#ARGV == 0) {
-    $run_time = $ARGV[0];
-    if ($#ARGV == 1) {
-        $keyset_size = $ARGV[1];
-    }
+if ($#ARGV == -1) {
     print "runtime = $run_time\n";
     print "keyset_size = $keyset_size\n";
 } else {
@@ -45,7 +41,7 @@ $cmd = "./integration/run.memcached.bash slave 11282";
 system($cmd);
 $cmd = "echo \"cluster join alone\" | nc localhost 11281";
 system($cmd);
-print "g0 M-11281, S-11282 migration join\n";
+#print "g0 M-11281, S-11282 migration join\n";
 sleep(3);
 
 ###########################################
@@ -82,7 +78,7 @@ print CONF
     "client_profile=integration_onlyset\n";
 close CONF;
 
-$cmd = "java -Xmx2g -Xms2g -Dnet.spy.log.LoggerImpl=net.spy.memcached.compat.log.Log4JLogger" .
+$cmd = "java -Xmx3g -Xms3g -Dnet.spy.log.LoggerImpl=net.spy.memcached.compat.log.Log4JLogger" .
        " -classpath $cls_path:. acp -config tmp-integration-config.txt";
 printf "RUN COMMAND=%s\n", $cmd;
 
@@ -120,7 +116,7 @@ print CONF
     "client_exptime=0\n" .
     "client_profile=integration_onlyget\n";
 close CONF;
-$cmd = "java -Xmx2g -Xms2g -Dnet.spy.log.LoggerImpl=net.spy.memcached.compat.log.Log4JLogger" .
+$cmd = "java -Xmx3g -Xms3g -Dnet.spy.log.LoggerImpl=net.spy.memcached.compat.log.Log4JLogger" .
        " -classpath $cls_path:. acp -config tmp-integration-config.txt";
 printf "RUN COMMAND=%s\n", $cmd;
 

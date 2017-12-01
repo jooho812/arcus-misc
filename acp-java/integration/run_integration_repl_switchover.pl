@@ -44,86 +44,51 @@ sleep 1;
 ########################################
 ###### 2. start switchover daemon ######
 ########################################
-my $run_interval = 15;
+my $run_interval = 30;
 $cmd = "touch __can_test_failure__";
 system($cmd);
 print "switchover daemon start....\n";
 $cmd = "./integration/loop.switchover.bash $m_port $s_port 0 $run_interval $run_time &";
 system($cmd);
 
+
+
+
 ########################################
-############ 3. insert data ############
+######## 3. get/set operation  #########
 ########################################
 open CONF, ">tmp-integration-config.txt" or die $!;
 print CONF
     "zookeeper=127.0.0.1:9181\n" .
     "service_code=test_rp\n" .
     #"single_server=" . $t_ip . ":" . $t_port . "\n" .
-    "client=30\n" .
+    "client=100\n" .
     "rate=0\n" .
     "request=0\n" .
-    "time=99999\n" .
+    "time=600\n" .
     "keyset_size=$keyset_size\n" .
-    "valueset_min_size=20\n" .
-    "valueset_max_size=20\n" .
-    "pool=1\n" .
-    "pool_size=20\n" .
+    "valueset_min_size=10\n" .
+    "valueset_max_size=30\n" .
+    "pool=5\n" .
+    "pool_size=30\n" .
     "pool_use_random=false\n" .
     "key_prefix=integrationtest:\n" .
     "client_exptime=0\n" .
-    "client_profile=integration_onlyset\n";
+    "client_timeout=3000\n" .
+    "client_profile=integration_repltest\n";
 close CONF;
 
-$cmd = "java -Xmx2g -Xms2g -Dnet.spy.log.LoggerImpl=net.spy.memcached.compat.log.Log4JLogger" .
+$cmd = "java -Xmx3g -Xms3g -Dnet.spy.log.LoggerImpl=net.spy.memcached.compat.log.Log4JLogger" .
        " -classpath $cls_path:. acp -config tmp-integration-config.txt";
 printf "RUN COMMAND=%s\n", $cmd;
 
 local $SIG{TERM} = sub { print "TERM SIGNAL\n" };
 my $ret = system($cmd);
-
-if ($ret ne 0) {
-  print "#########################\n";
-  print "TEST FAILED CODE=$ret >> switchover insert data\n";
-  print "#########################\n";
-  $cmd = "rm -f __can_test_failure__";
-  system($cmd);
-  exit(1);
-}
-
-########################################
-############# 3. get data ##############
-########################################
-open CONF, ">tmp-integration-config.txt" or die $!;
-print CONF
-    "zookeeper=127.0.0.1:9181\n" .
-    "service_code=test_rp\n" .
-    #"single_server=" . $t_ip . ":" . $t_port . "\n" .
-    "client=30\n" .
-    "rate=0\n" .
-    "request=0\n" .
-    "time=$run_time\n" .
-    "keyset_size=$keyset_size\n" .
-    "valueset_min_size=20\n" .
-    "valueset_max_size=20\n" .
-    "pool=1\n" .
-    "pool_size=20\n" .
-    "pool_use_random=false\n" .
-    "key_prefix=integrationtest:\n" .
-    "client_exptime=0\n" .
-    "client_profile=integration_onlyget\n";
-close CONF;
-$cmd = "java -Xmx2g -Xms2g -Dnet.spy.log.LoggerImpl=net.spy.memcached.compat.log.Log4JLogger" .
-       " -classpath $cls_path:. acp -config tmp-integration-config.txt";
-printf "RUN COMMAND=%s\n", $cmd;
-
-local $SIG{TERM} = sub { print "TERM SIGNAL\n" };
-$ret = system($cmd);
 $cmd = "rm -f __can_test_failure__";
 system($cmd);
-
 if ($ret ne 0) {
   print "#########################\n";
-  print "TEST FAILED CODE=$ret >> switchover get data\n";
+  print "TEST FAILED CODE=$ret >> switchover get/set data\n";
   print "#########################\n";
   exit(1);
 }

@@ -19,9 +19,6 @@ g4_s_port=11290
 echo "all migration node run\n"
 ./integration/start_memcached_migration.bash
 
-#echo "g0 M-$g0_m_port, S-$g0_s_port migration join"
-#echo cluster join alone | nc localhost $g0_m_port
-
 sleep 5
 
 while [ 1 ]

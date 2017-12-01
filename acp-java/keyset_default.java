@@ -47,7 +47,7 @@ class keyset_default implements keyset {
     return set[idx];
   }
 
-  public boolean keyset_store() {
+  synchronized public boolean keyset_store() {
       return keyset_store;
   }
 }

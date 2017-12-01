@@ -48,7 +48,7 @@ foreach $script (@script_list) {
         "client=30\n" .
         "rate=0\n" .
         "request=0\n" .
-        "time=600\n" .
+        "time=420\n" .
         "keyset_size=10000000\n" .
         "valueset_min_size=8\n" .
         "valueset_max_size=32\n" .
@@ -61,7 +61,7 @@ foreach $script (@script_list) {
         "client_profile=" . $script . "\n";
     close CONF;
 
-    $cmd = "java -Xmx2g -Xms2g -ea -Dnet.spy.log.LoggerImpl=net.spy.memcached.compat.log.Log4JLogger" .
+    $cmd = "java -Xmx3g -Xms3g -ea -Dnet.spy.log.LoggerImpl=net.spy.memcached.compat.log.Log4JLogger" .
            " -classpath $cls_path:. acp -config tmp-integration-config.txt";
     printf "RUN COMMAND=%s\n", $cmd;
 

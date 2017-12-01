@@ -68,9 +68,6 @@ class acp {
                        + thread.getName()
                        + " : " + e);
       if (assertException) {
-        //for (client cli : client) {
-        //  cli.set_stop(true);
-        //}
         System.exit(1);
       }
     }
