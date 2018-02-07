@@ -31,10 +31,10 @@ $cls_path = "$jar_path/arcus-java-client-1.11.0.jar" .
 
 @script_list = (
     "integration_simplekv"
-  , "integration_list"
-  , "integration_set"
-  , "integration_map"
-  , "integration_btree"
+#  , "integration_list"
+#  , "integration_set"
+#  , "integration_map"
+#  , "integration_btree"
 );
 
 foreach $script (@script_list) {

@@ -87,8 +87,8 @@ public class integration_simplekv implements client_profile {
     simple_attach_delete_test(cli);
     System.out.println("KV TEST : DELETE_TEST SUCCESS!");
     // test 5 : cas/gets
-    simple_cas_gets_test(cli);
-    System.out.println("KV TEST : CAS_TEST SUCCESS!");
+//    simple_cas_gets_test(cli);
+//    System.out.println("KV TEST : CAS_TEST SUCCESS!");
     // test 6 : incr/decr
     simple_arithmetic_test(cli);
     System.out.println("KV TEST : ARITHMETIC_TEST SUCCESS!");
@@ -157,31 +157,31 @@ public class integration_simplekv implements client_profile {
 
     assert ok : "kv_pre_test failed, predicted STORED";
 
-    fb = cli.next_ac.prepend(not_used, key, "jam2in"); //prepend value
-    ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
-
-    assert ok : "kv_pre_test failed, predicted STORED";
-
-    fbyte = cli.next_ac.asyncGet(key, raw_transcoder.raw_tc); //confirm prepend value
-    getval = fbyte.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
-
-    assert "jam2inarcus".equals(new String(getval, "UTF-8")) : "kv_pre_test failed, miss match prepende value";
-
-    key = "kv_apd_test";
-    fb = cli.next_ac.set(key, cli.conf.client_exptime, "arcus"); //set append key
-    ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
-
-    assert ok : "kv_apd_test failed, predicted STORED";
-
-    fb = cli.next_ac.append(not_used, key, "jam2in"); //append value
-    ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
-
-    assert ok : "kv_apd_test failed, predicted STORED";
-
-    fbyte = cli.next_ac.asyncGet(key, raw_transcoder.raw_tc); //confirm prepend value
-    getval = fbyte.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
-
-    assert "arcusjam2in".equals(new String(getval, "UTF-8")) : "kv_apd_test failed, miss match append value";
+//    fb = cli.next_ac.prepend(not_used, key, "jam2in"); //prepend value
+//    ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+//
+//    assert ok : "kv_pre_test failed, predicted STORED";
+//
+//    fbyte = cli.next_ac.asyncGet(key, raw_transcoder.raw_tc); //confirm prepend value
+//    getval = fbyte.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+//
+//    assert "jam2inarcus".equals(new String(getval, "UTF-8")) : "kv_pre_test failed, miss match prepende value";
+//
+//    key = "kv_apd_test";
+//    fb = cli.next_ac.set(key, cli.conf.client_exptime, "arcus"); //set append key
+//    ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+//
+//    assert ok : "kv_apd_test failed, predicted STORED";
+//
+//    fb = cli.next_ac.append(not_used, key, "jam2in"); //append value
+//    ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+//
+//    assert ok : "kv_apd_test failed, predicted STORED";
+//
+//    fbyte = cli.next_ac.asyncGet(key, raw_transcoder.raw_tc); //confirm prepend value
+//    getval = fbyte.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+//
+//    assert "arcusjam2in".equals(new String(getval, "UTF-8")) : "kv_apd_test failed, miss match append value";
 
     fb = cli.next_ac.delete(key); //delete key
     ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
