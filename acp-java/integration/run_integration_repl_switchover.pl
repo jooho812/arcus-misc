@@ -23,17 +23,6 @@ if ($#ARGV == -1) {
 use Cwd 'abs_path';
 use File::Basename;
 
-my $filename = abs_path($0);
-my $dir_path = dirname($filename);
-
-print "filename = $filename\n";
-print "dir_path = $dir_path\n";
-
-my $jar_path = "$dir_path/../../../arcus-java-client/target";
-my $cls_path = "$jar_path/arcus-java-client-1.11.0.jar" .
-    ":$jar_path/zookeeper-3.4.5.jar:$jar_path/log4j-1.2.16.jar" .
-    ":$jar_path/slf4j-api-1.6.1.jar:$jar_path/slf4j-log4j12-1.6.1.jar";
-
 ########################################
 # 1. start node(znode must be created) #
 ########################################
@@ -78,8 +67,7 @@ print CONF
     "client_profile=integration_repltest\n";
 close CONF;
 
-$cmd = "java -Xmx3g -Xms3g -Dnet.spy.log.LoggerImpl=net.spy.memcached.compat.log.Log4JLogger" .
-       " -classpath $cls_path:. acp -config tmp-integration-config.txt";
+$cmd = "./run.bash -config tmp-integration-config.txt";
 printf "RUN COMMAND=%s\n", $cmd;
 
 local $SIG{TERM} = sub { print "TERM SIGNAL\n" };
@@ -97,11 +85,11 @@ if ($ret ne 0) {
 ######## 4. master, slave kill #########
 ########################################
 
-$cmd = "kill \$(ps -ef | awk '/-e replication_config_file=replication.config; -p $m_port/ {print \$2}')";
+$cmd = "kill \$(ps -ef | awk '/sync.config; -p $m_port/ {print \$2}')";
 printf "RUN COMMAND = $cmd\n";
 printf "master node($m_port) kill\n";
 system($cmd);
-$cmd = "kill \$(ps -ef | awk '/-e replication_config_file=replication.config; -p $s_port/ {print \$2}')";
+$cmd = "kill \$(ps -ef | awk '/sync.config; -p $s_port/ {print \$2}')";
 printf "RUN COMMAND = $cmd\n";
 printf "slave node($s_port) kill\n";
 system($cmd);

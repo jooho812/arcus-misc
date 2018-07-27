@@ -55,7 +55,7 @@ public class client implements Runnable {
     this.bks = bks;
     this.vset = vset;
     this.profile = profile;
-    this.ratio = 4;
+    this.ratio = 5;
   }
   
   public void set_fixed_arcus_client(ArcusClient ac) {

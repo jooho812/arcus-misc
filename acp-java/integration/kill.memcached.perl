@@ -19,7 +19,7 @@ if ($#ARGV == 1) {
 
 sleep $k_intv;
 
-my $cmd = "kill -9 \$(ps -ef | awk '/-e replication_config_file=replication.config; -p $k_port/ {print \$2}')";
+my $cmd = "kill -9 \$(ps -ef | awk '/sync.config; -p $k_port/ {print \$2}')";
 printf "RUN COMMAND = $cmd\n";
 system($cmd);
 

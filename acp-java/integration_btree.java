@@ -491,6 +491,10 @@ public class integration_btree implements client_profile {
                                          , 0 /* offset */, 10 /* count */);
     result = colfmget.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
 
+    if (result.size() <= 0) {
+        assert false : "bop_mget_test failed, result size <= 0";
+    }
+
     for (Map.Entry<String, BTreeGetResult<Long, Object>> entry : result.entrySet()) {
         response = entry.getValue().getCollectionResponse().getResponse();
         key = entry.getKey();
@@ -518,6 +522,10 @@ public class integration_btree implements client_profile {
     List<SMGetElement<Object>> result;
     colfsmget = cli.next_ac.asyncBopSortMergeGet(keyList, 40, 10, ElementFlagFilter.DO_NOT_FILTER, 10, smgetMode);
     result = colfsmget.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+
+    if (result.size() <= 0) {
+        assert false : "bop_smget_test failed, result size <= 0";
+    }
 
     for (SMGetElement<Object> element : result)
         assert element.getKey().equals("bop_smget_test1")

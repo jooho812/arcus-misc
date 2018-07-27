@@ -2,7 +2,7 @@
 $t_ip = 0;   # test ip
 $t_port = 0; # test port
 sub print_usage {
-      print "Usage) perl ./integration/run_integration_func.pl test_ip test_port\n";
+      print "Usage) perl ./integration/run_integration_func.pl <test_ip> <test_port>\n";
 }
 
 if ($#ARGV eq 1) {
@@ -17,17 +17,6 @@ if ($#ARGV eq 1) {
 
 use Cwd 'abs_path';
 use File::Basename;
-
-$filename = abs_path($0);
-$dir_path = dirname($filename);
-
-print "filename = $filename\n";
-print "dir_path = $dir_path\n";
-
-$jar_path = "$dir_path/../../../arcus-java-client/target";
-$cls_path = "$jar_path/arcus-java-client-1.11.0.jar" .
-   ":$jar_path/zookeeper-3.4.5.jar:$jar_path/log4j-1.2.16.jar" .
-   ":$jar_path/slf4j-api-1.6.1.jar:$jar_path/slf4j-log4j12-1.6.1.jar";
 
 @script_list = (
     "integration_simplekv"
@@ -59,8 +48,7 @@ foreach $script (@script_list) {
         "client_profile=" . $script . "\n";
     close CONF;
 
-    $cmd = "java -Xmx2g -Xms2g -ea -Dnet.spy.log.LoggerImpl=net.spy.memcached.compat.log.Log4JLogger" .
-           " -classpath $cls_path:. acp -config tmp-integration-config.txt";
+    $cmd = "./run.bash -config tmp-integration-config.txt";
     printf "RUN COMMAND=%s\n", $cmd;
 
     local $SIG{TERM} = sub { print "TERM SIGNAL\n" };

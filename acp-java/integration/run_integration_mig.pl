@@ -6,64 +6,58 @@ use Term::ANSIColor qw(:constants);
 # use port 11281 ~ 11290, 21125 ~ 21134
 my $t_ip   = "127.0.0.1";
 my $t_port = "9181";
-my $t_server = $t_ip . ":" . $t_port;
+my $t_server;
 my $flag = -1; # -1 : start test(client, server)
                #  0 : start test(only server)
-               # >0 : start test(only client)
+               #  1 : start test(only client)
 my $run_time = 600;
 my $keyset_size = 10000000;
 my $cmd;
 my $ret;
 
 sub print_usage {
-    print "Usage) perl ./integration/run_integration_mig.pl [server(0) client(1)]\n";
+    print "Usage) perl ./integration/run_integration_mig.pl [[server(0) client(1)] <SERVER_IP>]\n";
 }
 
-if ($#ARGV le 0) {
-    if ($#ARGV eq 0) {
+if ($#ARGV == 1 || $#ARGV == -1) {
+    if ($#ARGV >= 0) {
         if ($ARGV[0] ) {
             $flag = 1;
         } else {
             $flag = 0;
         }
     }
+    if ($#ARGV eq 1) {
+        $t_ip = $ARGV[1];
+    }
     print "runtime = $run_time\n";
     print "keyset_size = $keyset_size\n";
-    print "t_server = $t_server\n";
+    print "t_ip = $t_ip\n";
+    print "t_port = $t_port\n";
     print "flag = $flag\n";
 } else {
     print_usage();
     die;
 }
+$t_server = $t_ip . ":" . $t_port;
 
 use Cwd 'abs_path';
 use File::Basename;
-
-my $filename = abs_path($0);
-my $dir_path = dirname($filename);
-
-print "filename = $filename\n";
-print "dir_path = $dir_path\n";
-
-my $jar_path = "$dir_path/../../../arcus-java-client/target";
-my $cls_path = "$jar_path/arcus-java-client-1.11.0.jar" .
-    ":$jar_path/zookeeper-3.4.5.jar:$jar_path/log4j-1.2.16.jar" .
-    ":$jar_path/slf4j-api-1.6.1.jar:$jar_path/slf4j-log4j12-1.6.1.jar";
 
 if ($flag eq -1 || $flag eq 0) {
     ###########################################
     ######### 1. group g0 node alone ##########
     ###########################################
-    $cmd = "./integration/run.memcached.bash master 11281;"
-            . "./integration/run.memcached.bash slave 11282;"
-            . "./integration/run.memcached.bash master 11283;"
-            . "./integration/run.memcached.bash slave 11284;"
-            . "./integration/run.memcached.bash master 11285;"
-            . "./integration/run.memcached.bash slave 11286;"
-            . "./integration/run.memcached.bash master 11287;"
-            . "./integration/run.memcached.bash slave 11288;"
-            . "./integration/run.memcached.bash master 11289;"
-            . "./integration/run.memcached.bash slave 11290";
+    $cmd = "./integration/run.memcached.bash 11281;"
+            . "./integration/run.memcached.bash 11282;"
+            . "./integration/run.memcached.bash 11283;"
+            . "./integration/run.memcached.bash 11284;"
+            . "./integration/run.memcached.bash 11285;"
+            . "./integration/run.memcached.bash 11286;"
+            . "./integration/run.memcached.bash 11287;"
+            . "./integration/run.memcached.bash 11288;"
+            . "./integration/run.memcached.bash 11289;"
+            . "./integration/run.memcached.bash 11290";
     system($cmd);
     print "11281, 11282, 11283, 11284, 11285, 11286, 11287, 11288, 11289, 11290 memcached node start";
     sleep(3);
@@ -100,8 +94,7 @@ if ($flag eq -1 || $flag eq 1) {
         "client_profile=integration_onlyset\n";
     close CONF;
 
-    $cmd = "java -Xmx3g -Xms3g -Dnet.spy.log.LoggerImpl=net.spy.memcached.compat.log.Log4JLogger" .
-           " -classpath $cls_path:. acp -config tmp-integration-config.txt";
+    $cmd = "./run.bash -config tmp-integration-config.txt";
     printf "RUN COMMAND=%s\n", $cmd;
 
     local $SIG{TERM} = sub { print "TERM SIGNAL\n" };
@@ -136,8 +129,7 @@ if ($flag eq -1 || $flag eq 1) {
         "client_exptime=0\n" .
         "client_profile=integration_onlyget\n";
     close CONF;
-    $cmd = "java -Xmx3g -Xms3g -Dnet.spy.log.LoggerImpl=net.spy.memcached.compat.log.Log4JLogger" .
-           " -classpath $cls_path:. acp -config tmp-integration-config.txt";
+    $cmd = "./run.bash -config tmp-integration-config.txt";
     printf "RUN COMMAND=%s\n", $cmd;
 
     local $SIG{TERM} = sub { print "TERM SIGNAL\n" };
@@ -191,8 +183,7 @@ if ($flag eq -1 || $flag eq 1) {
         "client_exptime=0\n" .
         "client_profile=integration_arcus\n";
     close CONF;
-    $cmd = "java -Xmx3g -Xms3g -Dnet.spy.log.LoggerImpl=net.spy.memcached.compat.log.Log4JLogger" .
-           " -classpath $cls_path:. acp -config tmp-integration-config.txt";
+    $cmd = "./run.bash -config tmp-integration-config.txt";
     printf "RUN COMMAND=%s\n", $cmd;
 
     local $SIG{TERM} = sub { print "TERM SIGNAL\n" };

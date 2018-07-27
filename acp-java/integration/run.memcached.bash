@@ -2,16 +2,23 @@
 
 if [ -z "$1" ];
 then
-  pidfile="master"
+  port_num=11211
 else
-  pidfile="$1"
+  port_num=$1
 fi
 
 if [ -z "$2" ];
 then
-  port_num=11211
+  repl_mode="sync"
 else
-  port_num=$2
+  repl_mode=$2
+fi
+
+if [ -z "$3" ];
+then
+  zk_ip="127.0.0.1"
+else
+  zk_ip=$3
 fi
 
 # Find os type. if system`s os is Mac OS X, we use greadlink.
@@ -32,12 +39,13 @@ USE_SYSLOG=1
 
 while :
 do
-  if [ $USE_SYSLOG -eq 1 ];
+  if [ $repl_mode == "sync" ];
   then
-    $MEMC_DIR/memcached -E $MEMC_DIR/.libs/default_engine.so -X $MEMC_DIR/.libs/syslog_logger.so -X $MEMC_DIR/.libs/ascii_scrub.so -d -v -r -R5 -U 0 -D: -b 8192 -m2048 -p $port_num -c 1000 -t $thread_count -z 127.0.0.1:9181 -e "replication_config_file=replication.config;" -p $port_num -o 3 -g 100
-    echo "$MEMC_DIR/memcached -E $MEMC_DIR/.libs/default_engine.so -X $MEMC_DIR/.libs/syslog_logger.so -X $MEMC_DIR/.libs/ascii_scrub.so -d -v -r -R5 -U 0 -D: -b 8192 -m2048 -p $port_num -c 1000 -t $thread_count -z 127.0.0.1:9181 -e \"replication_config_file=replication.config;\" -p $port_num -o 3 -g 100"
-  else
-    $MEMC_DIR/memcached -E $MEMC_DIR/.libs/default_engine.so -X $MEMC_DIR/.libs/ascii_scrub.so -d -v -r -R5 -U 0 -D: -b 8192 -m2048 -p $port_num -c 1000 -t $thread_count -z 127.0.0.1:9181 -e "replication_config_file=replication.config;" -P pidfiles/memcached.127.0.0.1:$port_num -o 3 -g 100 >> $MEMC_DIR_NAME.log 2>&1
+    $MEMC_DIR/memcached -E $MEMC_DIR/.libs/default_engine.so -X $MEMC_DIR/.libs/syslog_logger.so -X $MEMC_DIR/.libs/ascii_scrub.so -d -v -r -R5 -U 0 -D: -b 8192 -m2048 -p $port_num -c 1000 -t $thread_count -z $zk_ip\:9181 -e "replication_config_file=integration/repl.sync.config;" -p $port_num -o 3 -g 100
+    echo "$MEMC_DIR/memcached -E $MEMC_DIR/.libs/default_engine.so -X $MEMC_DIR/.libs/syslog_logger.so -X $MEMC_DIR/.libs/ascii_scrub.so -d -v -r -R5 -U 0 -D: -b 8192 -m2048 -p $port_num -c 1000 -t $thread_count -z $zk_ip\:9181 -e \"replication_config_file=integration/repl.sync.config;\" -p $port_num -o 3 -g 100"
+  else # run as "async mode""
+    $MEMC_DIR/memcached -E $MEMC_DIR/.libs/default_engine.so -X $MEMC_DIR/.libs/syslog_logger.so -X $MEMC_DIR/.libs/ascii_scrub.so -d -v -r -R5 -U 0 -D: -b 8192 -m2048 -p $port_num -c 1000 -t $thread_count -z $zk_ip\:9181 -e "replication_config_file=integration/repl.async.config;" -p $port_num -o 3 -g 100
+    echo "$MEMC_DIR/memcached -E $MEMC_DIR/.libs/default_engine.so -X $MEMC_DIR/.libs/syslog_logger.so -X $MEMC_DIR/.libs/ascii_scrub.so -d -v -r -R5 -U 0 -D: -b 8192 -m2048 -p $port_num -c 1000 -t $thread_count -z $zk_ip\:9181 -e \"replication_config_file=integration/repl.async.config;\" -p $port_num -o 3 -g 100"
   fi
 
   sleep $sleep_time

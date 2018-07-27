@@ -18,12 +18,12 @@ g4_s_port=11290
 
 if [ $# -le 1 ]; then
     if [ $# -eq 1 ]; then
-      SERVER_IP="$1"
+      SERVER_IP="$1";
     else
-      SERVER_IP="127.0.0.1"
+      SERVER_IP="127.0.0.1";
     fi
 else
-    echo "Usage) ./integration/migration_start_auto.bash"
+    echo "Usage) ./integration/migration_start_auto.bash [SERVER_IP]\n";
     exit 1;
 fi
 
@@ -51,24 +51,25 @@ function g4_stats() {
     echo stats | nc $SERVER_IP $g4_m_port | grep curr_items
 }
 
+# migration state
 function g0_migstats() {
-   echo stats migration | nc $SERVER_IP $g0_m_port | grep sm_info.mg_state
+   echo stats migration | nc $SERVER_IP $g0_m_port | grep $1
 }
 
 function g1_migstats() {
-   echo stats migration | nc $SERVER_IP $g1_m_port | grep sm_info.mg_state
+   echo stats migration | nc $SERVER_IP $g1_m_port | grep $1
 }
 
 function g2_migstats() {
-   echo stats migration | nc $SERVER_IP $g2_m_port | grep sm_info.mg_state
+   echo stats migration | nc $SERVER_IP $g2_m_port | grep $1
 }
 
 function g3_migstats() {
-   echo stats migration | nc $SERVER_IP $g3_m_port | grep sm_info.mg_state
+   echo stats migration | nc $SERVER_IP $g3_m_port | grep $1
 }
 
 function g4_migstats() {
-   echo stats migration | nc $SERVER_IP $g4_m_port | grep sm_info.mg_state
+   echo stats migration | nc $SERVER_IP $g4_m_port | grep $1
 }
 
 g0_count=0
@@ -144,29 +145,11 @@ function print_state() {
   fi
 }
 
-function print_mig_state() {
-  echo ">>> state of migration"
-  g0_str=$(g0_migstats)
-  g0_state=${g0_str:22}
-  print_state g0 $g0_state
-
-  g1_str=$(g1_migstats)
-  g1_state=${g1_str:22}
-  print_state g1 $g1_state
-
-  g2_str=$(g2_migstats)
-  g2_state=${g2_str:22}
-  print_state g2 $g2_state
-
-  g3_str=$(g3_migstats)
-  g3_state=${g3_str:22}
-  print_state g3 $g3_state
-
-  g4_str=$(g4_migstats)
-  g4_state=${g4_str:22}
-  print_state g4 $g4_state
+function mig_state() {
+  str=$(${1}_migstats sm_info.mg_state)
+  state=${str:22}
+  echo $state
 }
-
 
 ####################################
 ############ run test ##############
@@ -185,6 +168,23 @@ do
 
   while true
   do
+    g0_state=$(mig_state g0)
+    g1_state=$(mig_state g1)
+    g2_state=$(mig_state g2)
+    g3_state=$(mig_state g3)
+    g4_state=$(mig_state g4)
+    if [[ !(($g0_state =~ ^UNKNOWN)
+         && ($g1_state =~ ^UNKNOWN)
+         && ($g2_state =~ ^UNKNOWN)
+         && ($g3_state =~ ^UNKNOWN)
+         && ($g4_state =~ ^UNKNOWN)) ]]; then
+      # migration running
+      sleep 1
+      continue
+    fi
+
+    sleep $stime
+
     # leave
     response=`echo cluster leave begin| nc $SERVER_IP $g3_m_port`
     if [ "${response:0:2}" == "OK" ]; then
@@ -203,8 +203,6 @@ do
     fi
     sleep 1
   done
-
-  sleep $stime
 
   if [ "$migration_state" == "LEAVE" ]; then
   ###########################################3

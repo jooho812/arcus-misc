@@ -40,12 +40,12 @@ my $cls_path = "$jar_path/arcus-java-client-1.11.0.jar" .
 ########### 1. start cluster  #############
 ###########################################
 if ($cluster_number) { # 3 nodes
-    $cmd = "./integration/run.memcached.bash master 11301;"
-         . "./integration/run.memcached.bash slave 11302;"
-         . "./integration/run.memcached.bash master 11303;"
-         . "./integration/run.memcached.bash slave 11304;"
-         . "./integration/run.memcached.bash master 11305;"
-         . "./integration/run.memcached.bash slave 11306";
+    $cmd = "./integration/run.memcached.bash 11301;"
+         . "./integration/run.memcached.bash 11302;"
+         . "./integration/run.memcached.bash 11303;"
+         . "./integration/run.memcached.bash 11304;"
+         . "./integration/run.memcached.bash 11305;"
+         . "./integration/run.memcached.bash 11306";
     system($cmd);
     $cmd = "echo \"cluster join alone\" | nc localhost 11301";
     system($cmd); sleep(3);
@@ -54,14 +54,14 @@ if ($cluster_number) { # 3 nodes
     $cmd = "echo \"cluster join end\" | nc localhost 11305";
     system($cmd); sleep(1);
 } else { # 4 nodes
-    $cmd = "./integration/run.memcached.bash master 11307;"
-         . "./integration/run.memcached.bash slave 11308;"
-         . "./integration/run.memcached.bash master 11309;"
-         . "./integration/run.memcached.bash slave 11310;"
-         . "./integration/run.memcached.bash master 11311;"
-         . "./integration/run.memcached.bash slave 11312;"
-         . "./integration/run.memcached.bash master 11313;"
-         . "./integration/run.memcached.bash slave 11314";
+    $cmd = "./integration/run.memcached.bash 11307;"
+         . "./integration/run.memcached.bash 11308;"
+         . "./integration/run.memcached.bash 11309;"
+         . "./integration/run.memcached.bash 11310;"
+         . "./integration/run.memcached.bash 11311;"
+         . "./integration/run.memcached.bash 11312;"
+         . "./integration/run.memcached.bash 11313;"
+         . "./integration/run.memcached.bash 11314";
     system($cmd);
     $cmd = "echo \"cluster join alone\" | nc localhost 11307";
     system($cmd); sleep(3);
