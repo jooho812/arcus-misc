@@ -148,6 +148,9 @@ class acp {
     else if (conf.client_profile.equals("integration_repltest")) {
       profile = new integration_repltest();
     }
+    else if (conf.client_profile.equals("integration_idc_onlyset")) {
+      profile = new integration_idc_onlyset();
+    }
     else if (conf.client_profile.equals("integration_arcus")) {
       profile = new integration_arcus();
     }
@@ -355,6 +358,14 @@ class acp {
     int p_client_idx = 0;
     ArcusClientPool p = pool[pool_idx];
     ArcusClient[] p_clients = p.getAllClients();
+    File opdmp = null;
+    FileWriter opdmp_fw = null;
+
+    if (conf.operation_dumpfile != null) {
+      opdmp = new File(conf.operation_dumpfile);
+      opdmp_fw = new FileWriter(opdmp, true);
+    }
+
     for (int i = 0; i < conf.client; i++) {
       // Move to the next pool if the current one is full
       if (num_clients >= clients_per_pool) {
@@ -367,7 +378,7 @@ class acp {
 
       // Each client has its own bkey set.  FIXME
       client cli = new client(conf, i, p, kset, new bkey_set(100), vset,
-                              profile);
+                              profile, opdmp_fw);
 
       // Pick ArcusClient in a round robin fashion, if we are not picking
       // random clients for each request.

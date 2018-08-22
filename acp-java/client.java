@@ -17,6 +17,7 @@
  */
 import java.io.File;
 import java.util.Vector;
+import java.io.FileWriter;
 
 import net.spy.memcached.ArcusClient;
 import net.spy.memcached.ArcusClientPool;
@@ -30,6 +31,7 @@ public class client implements Runnable {
   keyset ks;
   bkey_set bks;
   valueset vset;
+  FileWriter fw;
   client_profile profile;
 
   // Bookkeeping vars used when running the test
@@ -47,7 +49,7 @@ public class client implements Runnable {
 
   public client(config conf, int id, ArcusClientPool pool, keyset ks,
                 bkey_set bks, valueset vset,
-                client_profile profile) {
+                client_profile profile, FileWriter fw) {
     this.conf = conf;
     this.id = id;
     this.pool = pool;
@@ -56,6 +58,7 @@ public class client implements Runnable {
     this.vset = vset;
     this.profile = profile;
     this.ratio = 5;
+    this.fw = fw;
   }
   
   public void set_fixed_arcus_client(ArcusClient ac) {
@@ -138,6 +141,22 @@ public class client implements Runnable {
       return (int)(stat_requests % ratio);
   }
 
+  public synchronized boolean write_operation(String key, byte[] val) {
+      String txt = key + "," + val + "\n";
+      do {
+        if (this.fw != null) {
+          try {
+            this.fw.write(txt);
+          } catch (Exception e) {
+              break;
+          }
+          return true;
+        }
+      } while(false);
+
+      return false;
+  }
+
   public synchronized Vector<Long> remove_latency_vector() {
     Vector<Long> v = latency_vector;
     latency_vector = null;
@@ -193,7 +212,7 @@ public class client implements Runnable {
     
     System.out.printf("Client is running. id=%d\n", id);    
     while (!stop) { 
-      /* Keep running */   
+      /* Keep running */
       File checkFile = new File("op_ignore");
       if (checkFile.exists()) {
         try {
@@ -208,6 +227,11 @@ public class client implements Runnable {
           continue;
         }
       }
+    }
+    if (fw != null) {
+      try {
+        fw.flush();
+      } catch (Exception e) {}
     }
     System.out.printf("Client stopped. id=%d\n", id);
   }

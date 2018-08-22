@@ -51,6 +51,7 @@ public class config {
   public int act_element_size = 10000;
   public boolean print_stack_trace = true;
   public String generate_resultfile = null;
+  public String operation_dumpfile = null;
 
   public config() {
   }
@@ -192,6 +193,9 @@ public class config {
     }
     else if (key.equals("generate_resultfile")) {
         generate_resultfile = val;
+    }
+    else if (key.equals("operation_dumpfile")) {
+        operation_dumpfile = val;
     }
     else {
       throw new Exception("Unknown configuration key/value. line="+ line);
