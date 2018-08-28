@@ -80,6 +80,7 @@ foreach $script (@script_list) {
                 }
             }
         }
+        close(TEXT);
     } else {
         last;
     }

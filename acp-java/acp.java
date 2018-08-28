@@ -151,6 +151,9 @@ class acp {
     else if (conf.client_profile.equals("integration_idc_onlyset")) {
       profile = new integration_idc_onlyset();
     }
+    else if (conf.client_profile.equals("integration_idc_onlyget")) {
+      profile = new integration_idc_onlyget();
+    }
     else if (conf.client_profile.equals("integration_arcus")) {
       profile = new integration_arcus();
     }
