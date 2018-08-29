@@ -34,24 +34,22 @@ public class simple_set implements client_profile {
   }
 
   public boolean do_simple_test(client cli) throws Exception {
-    // Set a number of items
-    for (int i = 0; i < 100; i++) {
-      if (!cli.before_request())
-        return false;
-      // Pick a key
-      String key = cli.ks.get_key();
-      byte[] val = cli.vset.get_value();
-      Future<Boolean> fb = 
-        cli.next_ac.set(key, cli.conf.client_exptime, val, raw_transcoder.raw_tc);
-      boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
-      if (!ok) {
-        System.out.printf("set failed. id=%d key=%s\n", cli.id, key);
-      }
-      if (!cli.after_request(ok))
-        return false;
-      if (!ok)
-        return true;
+    if (!cli.before_request())
+      return false;
+    // Pick a key
+    String key = cli.ks.get_key();
+//    byte[] val = cli.vset.get_value();
+    byte[] val = cli.conf.zookeeper.getBytes();
+    Future<Boolean> fb =
+      cli.next_ac.set(key, cli.conf.client_exptime, val, raw_transcoder.raw_tc);
+    boolean ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
+    if (!ok) {
+      System.out.printf("set failed. id=%d key=%s\n", cli.id, key);
     }
+    if (!cli.after_request(ok))
+      return false;
+    if (!ok)
+      return true;
     return true;
   }
 }

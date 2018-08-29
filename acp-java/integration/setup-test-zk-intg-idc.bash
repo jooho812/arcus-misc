@@ -9,14 +9,22 @@ DIR=`dirname $DIR`
 ZK_CLI="$DIR/../../../arcus/zookeeper/bin/zkCli.sh"
 ZK_ADDR="-server localhost:9181"
 
-if [ $# -eq 2 ]; then
-    N3_CLUSTER_IP="$1"
-    N4_CLUSTER_IP="$2"
+if [ $# -eq 1 ]; then
+    CLUSTER_IP=`ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print \$1}'`
+    if [ $1 -eq 0 ]; then # 3nodeClusterIp
+        N3_CLUSTER_IP=$CLUSTER_IP
+    elif [ $1 -eq 1 ]; then # 4nodeClusterIp
+        N4_CLUSTER_IP=$CLUSTER_IP
+    else
+        echo "Usage) ./integration/setup-test-zk-intg-idc.bash <cluster mode(0:3node, 1:4node)>"
+        exit 1;
+    fi
 else
-    echo "Usage) ./integration/setup-test-zk-intg-idc.bash <3nodeClusterIp> <4nodeClusterIp>"
+    echo "Usage) ./integration/setup-test-zk-intg-idc.bash <cluster mode(0:3node, 1:4node)>"
     exit 1;
 fi
 
+$ZK_CLI $ZK_ADDR rmr /arcus_repl 0
 $ZK_CLI $ZK_ADDR create /arcus_repl 0
 
 $ZK_CLI $ZK_ADDR create /arcus_repl/client_list 0
@@ -42,72 +50,55 @@ $ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping 0
 $ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping 0
 
 # cluster A (3 node)
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N3_CLUSTER_IP:11301 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N3_CLUSTER_IP:11301/test_idc^g0^$N3_CLUSTER_IP:20221^$N3_CLUSTER_IP:21221^$N3_CLUSTER_IP:22221 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N3_CLUSTER_IP:11302 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N3_CLUSTER_IP:11302/test_idc^g0^$N3_CLUSTER_IP:20222^$N3_CLUSTER_IP:21222^$N3_CLUSTER_IP:22222 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N3_CLUSTER_IP:11303 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N3_CLUSTER_IP:11303/test_idc^g1^$N3_CLUSTER_IP:20223^$N3_CLUSTER_IP:21223^$N3_CLUSTER_IP:22223 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N3_CLUSTER_IP:11304 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N3_CLUSTER_IP:11304/test_idc^g1^$N3_CLUSTER_IP:20224^$N3_CLUSTER_IP:21224^$N3_CLUSTER_IP:22224 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N3_CLUSTER_IP:11305 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N3_CLUSTER_IP:11305/test_idc^g2^$N3_CLUSTER_IP:20225^$N3_CLUSTER_IP:21225^$N3_CLUSTER_IP:22225 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N3_CLUSTER_IP:11306 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N3_CLUSTER_IP:11306/test_idc^g2^$N3_CLUSTER_IP:20226^$N3_CLUSTER_IP:21226^$N3_CLUSTER_IP:22226 0
+if [ $1 -eq 0 ]; then
+    $ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N3_CLUSTER_IP:11301 0
+    $ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N3_CLUSTER_IP:11301/test_idc^g0^$N3_CLUSTER_IP:20221^$N3_CLUSTER_IP:21221^$N3_CLUSTER_IP:22221^$N3_CLUSTER_IP:23221 0
+    $ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N3_CLUSTER_IP:11303 0
+    $ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N3_CLUSTER_IP:11303/test_idc^g1^$N3_CLUSTER_IP:20223^$N3_CLUSTER_IP:21223^$N3_CLUSTER_IP:22223^$N3_CLUSTER_IP:23223 0
+    $ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N3_CLUSTER_IP:11305 0
+    $ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N3_CLUSTER_IP:11305/test_idc^g2^$N3_CLUSTER_IP:20225^$N3_CLUSTER_IP:21225^$N3_CLUSTER_IP:22225^$N3_CLUSTER_IP:23225 0
 
-$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N3_CLUSTER_IP:11301 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N3_CLUSTER_IP:11302 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N3_CLUSTER_IP:11303 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N3_CLUSTER_IP:11304 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N3_CLUSTER_IP:11305 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N3_CLUSTER_IP:11306 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N3_CLUSTER_IP:11301/test_idc^$N3_CLUSTER_IP:23221 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N3_CLUSTER_IP:11302/test_idc^$N3_CLUSTER_IP:23222 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N3_CLUSTER_IP:11303/test_idc^$N3_CLUSTER_IP:23223 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N3_CLUSTER_IP:11304/test_idc^$N3_CLUSTER_IP:23224 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N3_CLUSTER_IP:11305/test_idc^$N3_CLUSTER_IP:23225 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N3_CLUSTER_IP:11306/test_idc^$N3_CLUSTER_IP:23226 0
+    $ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N3_CLUSTER_IP:11301 0
+    $ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N3_CLUSTER_IP:11303 0
+    $ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N3_CLUSTER_IP:11305 0
+    $ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N3_CLUSTER_IP:11301/test_idc^$N3_CLUSTER_IP:24221^$N3_CLUSTER_IP:25221 0
+    $ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N3_CLUSTER_IP:11303/test_idc^$N3_CLUSTER_IP:24223^$N3_CLUSTER_IP:25223 0
+    $ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N3_CLUSTER_IP:11305/test_idc^$N3_CLUSTER_IP:24225^$N3_CLUSTER_IP:25225 0
+
+    $ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N3_CLUSTER_IP:11306 0
+    $ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N3_CLUSTER_IP:11306/test_idc^$N3_CLUSTER_IP:24226^$N3_CLUSTER_IP:25226 0
+fi
+
 
 # cluster B (4 node)
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N4_CLUSTER_IP:11307 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N4_CLUSTER_IP:11307/test_idc^g3^$N4_CLUSTER_IP:20227^$N4_CLUSTER_IP:21227^$N4_CLUSTER_IP:22227 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N4_CLUSTER_IP:11308 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N4_CLUSTER_IP:11308/test_idc^g3^$N4_CLUSTER_IP:20228^$N4_CLUSTER_IP:21228^$N4_CLUSTER_IP:22228 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N4_CLUSTER_IP:11309 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N4_CLUSTER_IP:11309/test_idc^g4^$N4_CLUSTER_IP:20229^$N4_CLUSTER_IP:21229^$N4_CLUSTER_IP:22229 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N4_CLUSTER_IP:11310 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N4_CLUSTER_IP:11310/test_idc^g4^$N4_CLUSTER_IP:20230^$N4_CLUSTER_IP:21230^$N4_CLUSTER_IP:22230 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N4_CLUSTER_IP:11311 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N4_CLUSTER_IP:11311/test_idc^g5^$N4_CLUSTER_IP:20231^$N4_CLUSTER_IP:21231^$N4_CLUSTER_IP:22231 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N4_CLUSTER_IP:11312 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N4_CLUSTER_IP:11312/test_idc^g5^$N4_CLUSTER_IP:20232^$N4_CLUSTER_IP:21232^$N4_CLUSTER_IP:22232 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N4_CLUSTER_IP:11313 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N4_CLUSTER_IP:11313/test_idc^g6^$N4_CLUSTER_IP:20233^$N4_CLUSTER_IP:21233^$N4_CLUSTER_IP:22233 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N4_CLUSTER_IP:11314 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N4_CLUSTER_IP:11314/test_idc^g6^$N4_CLUSTER_IP:20234^$N4_CLUSTER_IP:21234^$N4_CLUSTER_IP:22234 0
+if [ $1 -eq 1 ]; then
+    $ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N4_CLUSTER_IP:11307 0
+    $ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N4_CLUSTER_IP:11307/test_idc^g3^$N4_CLUSTER_IP:20227^$N4_CLUSTER_IP:21227^$N4_CLUSTER_IP:22227^$N4_CLUSTER_IP:23227 0
+    $ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N4_CLUSTER_IP:11309 0
+    $ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N4_CLUSTER_IP:11309/test_idc^g4^$N4_CLUSTER_IP:20229^$N4_CLUSTER_IP:21229^$N4_CLUSTER_IP:22229^$N4_CLUSTER_IP:23229 0
+    $ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N4_CLUSTER_IP:11311 0
+    $ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N4_CLUSTER_IP:11311/test_idc^g5^$N4_CLUSTER_IP:20231^$N4_CLUSTER_IP:21231^$N4_CLUSTER_IP:22231^$N4_CLUSTER_IP:23231 0
+    $ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N4_CLUSTER_IP:11313 0
+    $ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$N4_CLUSTER_IP:11313/test_idc^g6^$N4_CLUSTER_IP:20233^$N4_CLUSTER_IP:21233^$N4_CLUSTER_IP:22233^$N4_CLUSTER_IP:23233 0
 
-$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N4_CLUSTER_IP:11307 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N4_CLUSTER_IP:11308 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N4_CLUSTER_IP:11309 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N4_CLUSTER_IP:11310 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N4_CLUSTER_IP:11311 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N4_CLUSTER_IP:11312 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N4_CLUSTER_IP:11313 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N4_CLUSTER_IP:11314 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N4_CLUSTER_IP:11307/test_idc^$N4_CLUSTER_IP:23227 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N4_CLUSTER_IP:11308/test_idc^$N4_CLUSTER_IP:23228 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N4_CLUSTER_IP:11309/test_idc^$N4_CLUSTER_IP:23229 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N4_CLUSTER_IP:11310/test_idc^$N4_CLUSTER_IP:23230 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N4_CLUSTER_IP:11311/test_idc^$N4_CLUSTER_IP:23231 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N4_CLUSTER_IP:11312/test_idc^$N4_CLUSTER_IP:23232 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N4_CLUSTER_IP:11313/test_idc^$N4_CLUSTER_IP:23233 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N4_CLUSTER_IP:11314/test_idc^$N4_CLUSTER_IP:23234 0
+    $ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N4_CLUSTER_IP:11307 0
+    $ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N4_CLUSTER_IP:11309 0
+    $ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N4_CLUSTER_IP:11311 0
+    $ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N4_CLUSTER_IP:11313 0
+    $ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N4_CLUSTER_IP:11307/test_idc^$N4_CLUSTER_IP:24227^$N4_CLUSTER_IP:25227 0
+    $ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N4_CLUSTER_IP:11309/test_idc^$N4_CLUSTER_IP:24229^$N4_CLUSTER_IP:25229 0
+    $ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N4_CLUSTER_IP:11311/test_idc^$N4_CLUSTER_IP:24231^$N4_CLUSTER_IP:25231 0
+    $ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N4_CLUSTER_IP:11313/test_idc^$N4_CLUSTER_IP:24233^$N4_CLUSTER_IP:25233 0
 
+    $ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N4_CLUSTER_IP:11314 0
+    $ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$N4_CLUSTER_IP:11314/test_idc^$N4_CLUSTER_IP:24234^$N4_CLUSTER_IP:25234 0
+fi
 $ZK_CLI $ZK_ADDR create /arcus_repl/xdcr_list 0
 $ZK_CLI $ZK_ADDR create /arcus_repl/xdcr_list/test_idc 0
 
 $ZK_CLI $ZK_ADDR create /arcus_repl/bridge_list 0
 $ZK_CLI $ZK_ADDR create /arcus_repl/bridge_list/test_idc 0
+$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_list/test_idc/stash_node 0
 $ZK_CLI $ZK_ADDR create /arcus_repl/bridge_list/test_idc/xdcr_node 0
 
 $ZK_CLI $ZK_ADDR create /arcus_repl/zkensemble_list 0

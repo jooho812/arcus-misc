@@ -19,7 +19,7 @@
 TC=/sbin/tc
 
 # The network interface we're planning on limiting bandwidth.
-IF=lo             # Interface
+IF=eth0             # Interface
 
 # Download limit (in mega bits)
 DNLD=1kbps          # DOWNLOAD Limit
@@ -30,7 +30,7 @@ UPLD=1kbps          # UPLOAD Limit
 # IP address of the machine we are controlling
 if [ -z "$2" ];
 then
-  PORT=11291    # Port we throttle from/to
+  PORT=20121    # Port we throttle from/to
 else
   PORT=$2
 fi

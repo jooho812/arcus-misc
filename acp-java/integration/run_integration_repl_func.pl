@@ -4,6 +4,7 @@ use strict;
 
 my $m_port = 11291; # master port
 my $s_port = 11292; # slave  port
+my $stash_port = 11299;  # stash port
 my $zk_ip = "127.0.0.1"; # server ip
 my $mode = "sync";       # run as "sync" mode
 my $run_time = 600;
@@ -51,43 +52,56 @@ use File::Basename;
 if ($flag eq -1) {
   $cmd = "./integration/run.memcached.bash $m_port $mode";
   system($cmd);
+  $cmd = "./integration/run.memcached.stash.bash $stash_port $mode";
+  system($cmd);
   $cmd = "./integration/run.memcached.bash $s_port $mode";
   system($cmd);
 } elsif ($flag eq 0) {
   # master node
   $cmd = "./integration/run.memcached.bash $m_port $mode";
   system($cmd);
+  if ($mode eq "async") {
+    $cmd = "./integration/run.memcached.stash.bash $stash_port $mode";
+    system($cmd);
+  }
 } elsif ($flag eq 1) {
   # slave node
   $cmd = "./integration/run.memcached.bash $s_port $mode $zk_ip";
   system($cmd);
+  $cmd = "echo \"cluster join alone\" | nc $zk_ip $m_port"; system($cmd);
 }
 sleep 3;
 
 #############################################
 # 3. after a few seconds master node down
 #############################################
-if ($flag eq -1 || $flag eq 0) {
-  my $kill_time = 100; # after kill_time seconds. kill -9 master node
-  $cmd = "perl ./integration/kill.memcached.perl $m_port $kill_time &";
-  print "after $kill_time seconds... kill -9 master node\n";
-  print $cmd , "\n";
-  system($cmd);
-  sleep 1;
+#if ($flag eq -1 || $flag eq 0) {
+#  my $kill_time = 50; # after kill_time seconds. kill -9 master node
+#  $cmd = "perl ./integration/kill.memcached.perl $m_port $kill_time &";
+#  print "after $kill_time seconds... kill -9 master node\n";
+#  print $cmd , "\n";
+#  system($cmd);
+#  sleep 1;
+#}
+
+##########################
+# 4. enable stash node
+##########################
+if (($flag eq -1 || $flag eq 0) && ($mode eq "async")) {
+  $cmd = `echo "stash register g0" | nc localhost $stash_port`;
 }
 
-
 ############################################
-# 4. bandwidth limit start(master node)
+# 5. bandwidth limit start(master node)
 ############################################
-if ($flag eq -1 || $flag eq 0) {
-  $cmd = "./integration/bandwitdth_limit.sh start $m_port";
-  system($cmd);
-  sleep 1;
-}
+#if ($flag eq -1 || $flag eq 0) {
+#  $cmd = "./integration/bandwidth_limit.sh start $m_port";
+#  system($cmd);
+#  sleep 1;
+#}
 
 ########################################
-# 5. get/set operation
+# 6. get/set operation
 ########################################
 if ($flag eq -1 || $flag eq 1) {
   open CONF, ">tmp-integration-config.txt" or die $!;
@@ -125,16 +139,16 @@ if ($flag eq -1 || $flag eq 1) {
 }
 
 ######################################
-# 6. banwidth limit stop(master node)
+# 7. bandwidth limit stop(master node)
 ######################################
-if ($flag eq -1 || $flag eq 0) {
-  $cmd = "./integration/bandwitdth_limit.sh stop $m_port";
-  system($cmd);
-  sleep 1;
-}
+#if ($flag eq -1) {
+#  $cmd = "./integration/bandwidth_limit.sh stop $m_port";
+#  system($cmd);
+#  sleep 1;
+#}
 
 ########################################
-# 6. slave kill
+# 8. slave kill
 ########################################
 if ($flag eq -1) {
   $cmd = "kill \$(ps -ef | awk '/sync.config; -p $s_port/ {print \$2}')";

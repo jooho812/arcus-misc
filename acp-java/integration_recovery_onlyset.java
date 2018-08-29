@@ -18,69 +18,47 @@
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-public class integration_getset_ratio implements client_profile {
+public class integration_recovery_onlyset implements client_profile {
   public boolean do_test(client cli) {
     try {
       if (!do_simple_test(cli))
         return false;
     } catch (Exception e) {
       cli.after_request(false);
-      /*
-      System.out.printf("client_profile exception. id=%d exception=%s\n", 
-                        cli.id, e.toString());
-      */
       if (cli.conf.print_stack_trace)
         e.printStackTrace();
-      //System.exit(0);
     }
     return true;
   }
 
   public boolean do_simple_test(client cli) throws Exception {
-    // All keyset entries must already be in cluster
-    // Please refer to integration_onlyset.java
-    // Do one set and <get_count> get.
-
+    // Pick a key
     String key;
     byte[] val;
     Future<Boolean> fb;
-    Future<byte[]> f;
-    boolean ok;
-    int ratio = cli.get_ratio();
+    boolean ok = false;
 
-    long start = System.nanoTime();
-    long end;
+    if (!cli.before_request())
+      return false;
+    key = cli.ks.get_key_by_cliid(cli);
+    val = cli.vset.get_value();
 
-    if (ratio == 0) {
-      if (!cli.before_request())
-        return false;
-      // Pick a key
-      key = cli.ks.get_key();
-      val = cli.vset.get_value();
+    try {
       fb = cli.next_ac.set(key, cli.conf.client_exptime, val, raw_transcoder.raw_tc);
       ok = fb.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
-      if (!ok) {
-        System.out.printf("integration test set failed. id=%d key=%s\n", cli.id, key);
+      if (!cli.write_cli_operation(key, null)) {
+        System.out.println("recovery onlyset test failed : file write occur exception.");
         System.exit(1);
       }
-      if (!cli.after_request(ok))
-        return false;
-    } else {
-      if (!cli.before_request())
-        return false;
-      key = cli.ks.get_key();
-      f = cli.next_ac.asyncGet(key, raw_transcoder.raw_tc);
-      val = f.get(cli.conf.client_timeout, TimeUnit.MILLISECONDS);
-
-      if (val == null) {
-        System.out.printf("integration test get failed. id=%d key=%s\n", cli.id, key);
-        System.exit(1);
-      }
-      if (!cli.after_request(true))
-        return false;
+    } catch (Exception e) {
+      System.out.println("node is killed stop the test");
+      cli.set_stop(true);
+      return true;
     }
-    end = System.nanoTime();
-    cli.add_optime(end - start);
+
+    if (!cli.after_request(ok))
+      return false;
+
     return true;
   }
 }

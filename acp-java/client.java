@@ -28,10 +28,10 @@ public class client implements Runnable {
   ArcusClient fixed_ac = null;
   int id;
   int ratio;
+  int keyidx; // for recovery test
   keyset ks;
   bkey_set bks;
   valueset vset;
-  FileWriter fw;
   client_profile profile;
 
   // Bookkeeping vars used when running the test
@@ -47,6 +47,12 @@ public class client implements Runnable {
   public long stat_requests_error = 0;
   Vector<Long> latency_vector = null;
 
+  // dump client individual files
+  FileWriter fw;     // common filewriter(for idc test)
+  File opdmp = null; // client individual filewriter(for recovery test)
+  FileWriter opdmp_fw = null;
+  long optime; // operation time
+
   public client(config conf, int id, ArcusClientPool pool, keyset ks,
                 bkey_set bks, valueset vset,
                 client_profile profile, FileWriter fw) {
@@ -59,14 +65,25 @@ public class client implements Runnable {
     this.profile = profile;
     this.ratio = 5;
     this.fw = fw;
+    this.keyidx = 0;
+    this.optime = 0;
   }
   
   public void set_fixed_arcus_client(ArcusClient ac) {
     fixed_ac = ac;
   }
+  
+  public void add_optime(long time) {
+      optime += time;
+  }
 
   public void set_stop(boolean b) {
     stop = b;
+  }
+
+  public void init_operation_dump(String filename) throws Exception {
+    opdmp = new File(filename);
+    opdmp_fw = new FileWriter(opdmp, true);
   }
 
   public boolean before_request(boolean check_latency)
@@ -138,23 +155,39 @@ public class client implements Runnable {
   }
 
   public synchronized int get_ratio() {
-      return (int)(stat_requests % ratio);
+    return (int)(stat_requests % ratio);
+  }
+
+  public boolean write_cli_operation(String key, byte[] val) {
+    if (this.opdmp_fw == null) return false;
+    String txt = key + "\n";
+    do {
+      try {
+        this.opdmp_fw.write(txt);
+      } catch (Exception e) {
+        break;
+      }
+      return true;
+    } while(false);
+    return false;
   }
 
   public synchronized boolean write_operation(String key, byte[] val) {
-      String txt = key + "," + val + "\n";
-      do {
-        if (this.fw != null) {
-          try {
-            this.fw.write(txt);
-          } catch (Exception e) {
-              break;
-          }
-          return true;
-        }
-      } while(false);
+    String txt;
 
-      return false;
+    if (val != null) txt = key + "," + val + "\n";
+    else             txt = key + "\n";
+    do {
+      if (this.fw != null) {
+        try {
+          this.fw.write(txt);
+        } catch (Exception e) {
+            break;
+        }
+        return true;
+      }
+    } while(false);
+    return false;
   }
 
   public synchronized Vector<Long> remove_latency_vector() {
@@ -228,6 +261,13 @@ public class client implements Runnable {
         }
       }
     }
+
+    if (opdmp_fw != null) {
+      try {
+        opdmp_fw.flush();
+      } catch (Exception e) {}
+    }
+
     if (fw != null) {
       try {
         fw.flush();

@@ -40,8 +40,6 @@ public class integration_idc_onlyget implements client_profile {
     // Do one set and one get.  The same key.
 
     int get_try = 10;
-    if (!cli.before_request())
-      return false;
 
     String key;
     byte[] val = null;

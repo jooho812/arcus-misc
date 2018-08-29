@@ -4,23 +4,16 @@ $t_port = 0; # test port
 $est_perf = 0; # estimated performance
 $client = 256;
 $timeout = 1000;
+$idc_zkip = "127.0.0.1";
 sub print_usage {
-      print "Usage) perl ./integration/run_integration_perf.pl <test_ip> <test_port> <performance> [client_num] [client_timeout]\n";
+      print "Usage) perl ./integration/run_integration_perf.pl [IDC_ZKIP]\n";
 }
 
-if (($#ARGV eq 2) || ($#ARGV eq 3) || ($#ARGV eq 4)) {
-    $t_ip = $ARGV[0];
-    $t_port = $ARGV[1];
-    $est_perf = $ARGV[2];
-    if ($#ARGV >= 3) {
-        $client = $ARGV[3];
-        if ($#ARGV >= 4 ) {
-            $timeout = $ARGV[4];
-        }
+if ($#ARGV le 0) {
+    if ($#ARGV eq 1) {
+        $idc_zkip = "$ARGV[0]";
     }
-    print "master_ip = $t_ip\n";
-    print "master_port = $t_port\n";
-    print "estimated_performance = $est_perf\n";
+    print "idc_zookeeper_ip = $idc_zkip\n";
 } else {
     print_usage();
     die;
@@ -41,13 +34,12 @@ foreach $script (@script_list) {
     if ($script eq "integration_onlyset") {
       $time = 9999999;
     } else {
-      $time = 360;
+      $time = 240;
     }
     open CONF, ">tmp-integration-config.txt" or die $!;
     print CONF
-        #"zookeeper=127.0.0.1:9181\n" .
-        #"service_code=test\n" .
-        "single_server=" . $t_ip . ":" . $t_port . "\n" .
+        "zookeeper=$idc_zkip:9181\n" .
+        "service_code=test_idc\n" .
         "client=$client\n" .
         "rate=0\n" .
         "request=0\n" .
@@ -91,6 +83,7 @@ foreach $script (@script_list) {
         last;
     }
 }
+
 ###############################
 # for check response time
 ###############################
@@ -100,7 +93,8 @@ $result_filename = "tmp-integration-perf-summary_responseTime.txt"; #generate re
 my $time;
 open CONF, ">tmp-integration-config.txt" or die $!;
 print CONF
-    "single_server=" . $t_ip . ":" . $t_port . "\n" .
+    "zookeeper=$idc_zkip:9181\n" .
+    "service_code=test_idc\n" .
     "client=1\n" .
     "rate=0\n" .
     "request=0\n" .

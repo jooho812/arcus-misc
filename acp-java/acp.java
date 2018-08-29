@@ -39,10 +39,14 @@ class acp {
   Thread[] client_thread;
 
   static long avg_request;
+  static long tot_request;
+  static long tot_optime;
 
   public acp(config conf) {
     this.conf = conf;
     this.avg_request = 0;
+    this.tot_request = 0;
+    this.tot_optime = 0;
   }
 
   // Used to create ArcusClient that uses the single server specified by
@@ -153,6 +157,15 @@ class acp {
     }
     else if (conf.client_profile.equals("integration_idc_onlyget")) {
       profile = new integration_idc_onlyget();
+    }
+    else if (conf.client_profile.equals("integration_recovery_onlyset")) {
+      profile = new integration_recovery_onlyset();
+    }
+    else if (conf.client_profile.equals("integration_recovery_onlyget")) {
+      profile = new integration_recovery_onlyget();
+    }
+    else if (conf.client_profile.equals("integration_rangesearch")) {
+      profile = new integration_rangesearch();
     }
     else if (conf.client_profile.equals("integration_arcus")) {
       profile = new integration_arcus();
@@ -382,6 +395,9 @@ class acp {
       // Each client has its own bkey set.  FIXME
       client cli = new client(conf, i, p, kset, new bkey_set(100), vset,
                               profile, opdmp_fw);
+      if (conf.operation_cli_dumpfile != null) {
+        cli.init_operation_dump(conf.operation_cli_dumpfile + i + ".txt");
+      }
 
       // Pick ArcusClient in a round robin fashion, if we are not picking
       // random clients for each request.
@@ -479,6 +495,8 @@ class acp {
             // Tell clients to stop
             for (client cli : client) {
               avg_request += (cli.stat_requests / conf.time);
+              tot_request += cli.stat_requests;
+              tot_optime += cli.optime;
               cli.set_stop(true);
             }
           }
@@ -618,6 +636,7 @@ class acp {
     acp acp = new acp(conf);
     acp.setup();
     acp.run_bench();
+    long rp_time = tot_request == 0 ? 0 : tot_optime/tot_request;
     if (conf.generate_resultfile != null) {
       System.out.println("Generating summary of result file....");
       String txt = "################################\n"
@@ -625,6 +644,8 @@ class acp {
                  + "################################\n"
                  + "elapsed(s)=" + conf.time + "\n"
                  + "requests/s=" + avg_request + "\n"
+                 + "response_time(ns)=" + rp_time + "\n"
+                 + "total_operationtime=" + tot_optime + "\n"
                  + "zookeeper=" + conf.zookeeper + "\n"
                  + "service_code=" + conf.service_code + "\n"
                  + "single_server=" + conf.single_server + "\n"

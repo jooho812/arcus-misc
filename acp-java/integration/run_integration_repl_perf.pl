@@ -73,6 +73,8 @@ if ($flag eq -1) {
   # slave node
   $cmd = "./integration/run.memcached.bash $s_port $mode $zk_ip";
   system($cmd);
+  sleep 1;
+  $cmd = "echo \"cluster join alone\" | nc $zk_ip $m_port"; system($cmd);
 }
 sleep 3;
 
@@ -80,7 +82,7 @@ sleep 3;
 # 2. run integration perf
 ########################################
 if ($flag eq -1 || $flag eq 1) {
-  $cmd = "./integration/run_integration_perf.pl $zk_ip $m_port $expect_perf 100";
+  $cmd = "./integration/run_integration_perf.pl $zk_ip $m_port $expect_perf";
   system($cmd);
   sleep 2;
 }

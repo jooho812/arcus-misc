@@ -18,5 +18,6 @@
 interface keyset {
   public void reset();
   public String get_key();
+  public String get_key_by_cliid(client cli); // for recovery test
   public boolean keyset_store();
 }

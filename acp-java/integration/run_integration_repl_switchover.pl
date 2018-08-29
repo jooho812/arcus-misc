@@ -6,6 +6,7 @@ my $m_port = 11293; # master port
 my $s_port = 11294; # slave  port
 my $run_time = 600;
 my $keyset_size = 10000000;
+my $cmd = "";
 sub print_usage {
   print "Usage) perl ./integration/run_integration_repl_switchover.pl\n";
 }
@@ -26,8 +27,10 @@ use File::Basename;
 ########################################
 # 1. start node(znode must be created) #
 ########################################
-my $cmd = "./integration/start_memcached_replication.bash $m_port $s_port";
-system($cmd);
+$cmd = "./integration/run.memcached.bash $m_port sync"; system($cmd);
+$cmd = "./integration/run.memcached.bash $s_port sync"; system($cmd);
+sleep 1;
+$cmd = "echo \"cluster join alone\" | nc $zk_ip $m_port"; system($cmd);
 sleep 1;
 
 ########################################
@@ -85,14 +88,14 @@ if ($ret ne 0) {
 ######## 4. master, slave kill #########
 ########################################
 
-$cmd = "kill \$(ps -ef | awk '/sync.config; -p $m_port/ {print \$2}')";
-printf "RUN COMMAND = $cmd\n";
-printf "master node($m_port) kill\n";
-system($cmd);
-$cmd = "kill \$(ps -ef | awk '/sync.config; -p $s_port/ {print \$2}')";
-printf "RUN COMMAND = $cmd\n";
-printf "slave node($s_port) kill\n";
-system($cmd);
+#$cmd = "kill \$(ps -ef | awk '/sync.config; -p $m_port/ {print \$2}')";
+#printf "RUN COMMAND = $cmd\n";
+#printf "master node($m_port) kill\n";
+#system($cmd);
+#$cmd = "kill \$(ps -ef | awk '/sync.config; -p $s_port/ {print \$2}')";
+#printf "RUN COMMAND = $cmd\n";
+#printf "slave node($s_port) kill\n";
+#system($cmd);
 
 print "#########################\n";
 print "SUCCESS SWITCHOVER TEST\n";

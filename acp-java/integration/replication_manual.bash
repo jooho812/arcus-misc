@@ -17,7 +17,7 @@ if [[ $# -le 3 && $# -ge 1 ]]; then
         SLAVE_IP="127.0.0.1"
     fi
 else
-    echo "Usage) ./integration/replication_manual.bash <0(stats)> [MASTER_IP] [SLAVE_IP]>"
+    echo "Usage) ./integration/replication_manual.bash <0(stats)> [MASTER_IP] [SLAVE_IP]> <1: kill master node(11291)>";
     exit 1;
 fi
 
@@ -77,5 +77,7 @@ if [ $RUN_FLAG -eq 0 ]; then
     print_mig_state
     sleep 1
   done
+elif [ $RUN_FLAG -eq 1 ]; then
+  cmd=`perl ./integration/kill.memcached.perl 11291 0`
 fi
 

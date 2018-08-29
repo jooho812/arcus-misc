@@ -20,6 +20,7 @@ else
   exit 1
 fi
 
+$ZK_CLI $ZK_ADDR rmr /arcus_repl 0
 $ZK_CLI $ZK_ADDR create /arcus_repl 0
 
 $ZK_CLI $ZK_ADDR create /arcus_repl/client_list 0
@@ -35,13 +36,35 @@ $ZK_CLI $ZK_ADDR create /arcus_repl/group_list/test_rp 0
 $ZK_CLI $ZK_ADDR create /arcus_repl/group_list/test_rp/g0 0
 $ZK_CLI $ZK_ADDR create /arcus_repl/group_list/test_rp/g1 0 #for switchover
 
+# for functional & performance test
 $ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping 0
 $ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$M_SERVER_IP:11291 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$M_SERVER_IP:11291/test_rp^g0^$M_SERVER_IP:20121 0
+$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$M_SERVER_IP:11291/test_rp^g0^$M_SERVER_IP:20121^$M_SERVER_IP:20131^$M_SERVER_IP:20141^$M_SERVER_IP:20151 0
 $ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$S_SERVER_IP:11292 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$S_SERVER_IP:11292/test_rp^g0^$S_SERVER_IP:20122 0
+$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$S_SERVER_IP:11292/test_rp^g0^$S_SERVER_IP:20122^$S_SERVER_IP:20132^$S_SERVER_IP:20142^$S_SERVER_IP:20152 0
 
+# for switchover test only use M_SERVER
 $ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$M_SERVER_IP:11293 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$M_SERVER_IP:11293/test_rp^g1^$M_SERVER_IP:20123 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$S_SERVER_IP:11294 0
-$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$S_SERVER_IP:11294/test_rp^g1^$S_SERVER_IP:20124 0
+$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$M_SERVER_IP:11293/test_rp^g1^$M_SERVER_IP:20123^$M_SERVER_IP:20133^$M_SERVER_IP:20143^$M_SERVER_IP:20153 0
+$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$M_SERVER_IP:11294 0
+$ZK_CLI $ZK_ADDR create /arcus_repl/cache_server_mapping/$M_SERVER_IP:11294/test_rp^g1^$M_SERVER_IP:20124^$M_SERVER_IP:20134^$M_SERVER_IP:20144^$M_SERVER_IP:20154 0
+
+# for stash node test
+$ZK_CLI $ZK_ADDR create /arcus_repl/xdcr_list 0
+$ZK_CLI $ZK_ADDR create /arcus_repl/xdcr_list/test_rp 0
+
+$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_list 0
+$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_list/test_rp 0
+$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_list/test_rp/stash_node 0
+$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_list/test_rp/xdcr_node 0
+
+$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping 0
+$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$M_SERVER_IP:11291 0
+$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$S_SERVER_IP:11292 0
+$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$M_SERVER_IP:11299 0
+$ZK_CLI $ZK_ADDR create /arcus_repl/bridge_server_mapping/$M_SERVER_IP:11299/test_rp^$M_SERVER_IP:11295^$M_SERVER_IP:11296 0
+
+# for enable migration
+$ZK_CLI $ZK_ADDR rmr /arcus_repl/cloud_stat 0
+$ZK_CLI $ZK_ADDR create /arcus_repl/cloud_stat 0
+$ZK_CLI $ZK_ADDR create /arcus_repl/cloud_stat/test_rp 0
